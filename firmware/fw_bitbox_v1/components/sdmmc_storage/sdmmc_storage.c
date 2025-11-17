@@ -2,6 +2,7 @@
 #include <inttypes.h>
 #include <stdio.h>
 #include <stddef.h>
+#include <stdbool.h>
 
 #include "sdmmc_storage.h"
 #include "driver/sdmmc_default_configs.h"
@@ -92,7 +93,7 @@ void sdmmc_stor_init(void)
     
 }
 
-void sdmmc_stor_record_data_txt(const void *p_data, size_t size, const char *file_name)
+bool sdmmc_stor_record_data_txt(const void *p_data, size_t size, const char *file_name)
 {
     char path[128] = {0};
     snprintf(path, sizeof(path), "%s%s.txt", MOUNT_POINT, file_name);
@@ -101,16 +102,18 @@ void sdmmc_stor_record_data_txt(const void *p_data, size_t size, const char *fil
     if(f == NULL)
     {
         ESP_LOGE(TAG, "Erro ao abrir arquivo!");
-        return;
+        return false;
     }
 
     size_t bytes_written = fwrite(p_data, 1, size, f);
     ESP_LOGI(TAG, "%zu bytes gravados com sucesso em %s", bytes_written, path);
 
     fclose(f);
+
+    return true;
 }
 
-void sdmmc_stor_record_data_bin(const void *p_data, size_t size, const char *file_name)
+bool sdmmc_stor_record_data_bin(const void *p_data, size_t size, const char *file_name)
 {
     char path[128] = {0};
     snprintf(path, sizeof(path), "%s%s.bin", MOUNT_POINT, file_name);
@@ -119,12 +122,14 @@ void sdmmc_stor_record_data_bin(const void *p_data, size_t size, const char *fil
     if(f == NULL)
     {
         ESP_LOGE(TAG, "Erro ao abrir arquivo!");
-        return;
+        return false;
     }
 
     size_t bytes_written = fwrite(p_data, 1, size, f);
     ESP_LOGI(TAG, "%zu bytes gravados com sucesso em %s", bytes_written, path);
 
     fclose(f);
+
+    return true;
 }
 

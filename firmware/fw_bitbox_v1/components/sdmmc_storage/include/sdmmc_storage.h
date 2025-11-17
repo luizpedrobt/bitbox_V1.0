@@ -13,6 +13,6 @@
 
 void sdmmc_stor_init(void);
 
-void sdmmc_stor_record_data_txt(const void *p_data, size_t size, const char *file_name);
+bool sdmmc_stor_record_data_txt(const void *p_data, size_t size, const char *file_name);
 
-void sdmmc_stor_record_data_bin(const void *p_data, size_t size, const char *file_name);
+bool sdmmc_stor_record_data_bin(const void *p_data, size_t size, const char *file_name);

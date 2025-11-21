@@ -14,15 +14,37 @@
 #define WIFI_MAX_RETRYS 5
 
 #define WIFI_CONNECTED_BIT BIT0
-#define WIFI_FAIL_BIT BIT1
+#define WIFI_FAIL_BIT      BIT1
 
 static const char *TAG = "WIFI_CONN";
 
 static EventGroupHandle_t wifi_event_group;
+static int retry_num = 0;
 
-static void event_handler(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data)
+static void wifi_event_handler(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data)
 {
-    esp_wifi_connect();
+    if(event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_START)
+        esp_wifi_connect();
+    else if(event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED)
+    {
+        if(retry_num < WIFI_MAX_RETRYS)
+        {
+            esp_wifi_connect();
+            retry_num++;
+            ESP_LOGI(TAG, "Tentando se conectar no WiFi");
+        }
+        else
+            xEventGroupSetBits(wifi_event_group, WIFI_FAIL_BIT);
+
+        ESP_LOGI(TAG, "Falha na Conexão Wi-Fi");
+    }
+    else if(event_base == IP_EVENT && event_id == IP_EVENT_STA_GOT_IP)
+    {
+        ip_event_got_ip_t *event = (ip_event_got_ip_t *)event_data;
+        ESP_LOGI(TAG, "Conectado com IP: "IPSTR, IP2STR(&event->ip_info.ip));
+        retry_num = 0;
+        xEventGroupSetBits(wifi_event_group, WIFI_CONNECTED_BIT);
+    }
 }   
 
 void wifi_conn_init(void)
@@ -41,12 +63,12 @@ void wifi_conn_init(void)
 
     ESP_ERROR_CHECK(esp_event_handler_instance_register(WIFI_EVENT,
                                                         ESP_EVENT_ANY_ID,
-                                                        &event_handler,
+                                                        &wifi_event_handler,
                                                         NULL,
                                                         &instance_any_id));
     ESP_ERROR_CHECK(esp_event_handler_instance_register(IP_EVENT,
                                                         IP_EVENT_STA_GOT_IP,
-                                                        &event_handler,
+                                                        &wifi_event_handler,
                                                         NULL,
                                                         &instance_got_ip));
 
@@ -62,7 +84,7 @@ void wifi_conn_init(void)
     };
 
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
-    ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_config));
+    ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_cfg));
     ESP_ERROR_CHECK(esp_wifi_start());
 
     ESP_LOGI(TAG, "Inicializando Wi-Fi STA...");

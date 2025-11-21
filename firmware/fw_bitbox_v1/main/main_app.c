@@ -14,6 +14,7 @@
 
 #include "sdmmc_storage.h"
 #include "uart_periph.h"
+#include "wifi_conn.h"
 
 static const char *TAG = "MAIN_APP";
 
@@ -31,6 +32,7 @@ static void app_init_periph(void)
 {
     sdmmc_initialized = sdmmc_stor_init();
     uart_periph_initialized = uart_periph_driver_init();
+    wifi_conn_init();
 }
 
 /* --------- FUNCTION SOURCE ------------------------*/

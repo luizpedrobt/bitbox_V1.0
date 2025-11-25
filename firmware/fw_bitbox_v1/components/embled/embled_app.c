@@ -94,7 +94,7 @@ static void embled_app_init(void)
         xTimerStart(led_tmr_handler, 0);
     }
 
-    ESP_LOGI(TAG, "STATUS LED APP: %d", embled_set_mode(embl_app_pins[PORT_STATUS], EMBLED_DRIVER_MODE_DIGITAL, EMBLED_MODE_PULSE_FAST_DOUBLE_ONCE, EMBLED_ACTIVE_HIGH, false));
+    ESP_LOGI(TAG, "STATUS LED APP: %d", embled_set_mode(embl_app_pins[PORT_STATUS], EMBLED_DRIVER_MODE_DIGITAL, EMBLED_MODE_BLINK_SLOW, EMBLED_ACTIVE_HIGH, false));
     ESP_LOGI(TAG, "STATUS LED APP: %d", embled_set_mode(embl_app_pins[PORT_OPER], EMBLED_DRIVER_MODE_DIGITAL, EMBLED_MODE_BLINK_FAST, EMBLED_ACTIVE_HIGH, false));
 }
 

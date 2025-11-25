@@ -9,7 +9,7 @@ BROKER_URL = "qa717179.ala.us-east-1.emqxsl.com" # Seu endereço do print anteri
 BROKER_PORT = 8883                                # Porta segura obrigatória
 USERNAME = "luizpedrobt"                   # O mesmo que você criou na aba Authentication
 PASSWORD = "papagaio23"
-TOPIC = "/topic/config"                          # Tópico onde o ESP32 vai escutar
+TOPIC = "/topic/qos0"                          # Tópico onde o ESP32 vai escutar
 CA_CERT_PATH = "components/mqtt_app/certs/emqxsl-ca.crt"                  # Nome do arquivo que você baixou (ou .pem)
 
 # --- CALLBACKS ---

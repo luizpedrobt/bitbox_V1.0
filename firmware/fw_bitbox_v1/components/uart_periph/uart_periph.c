@@ -107,9 +107,9 @@ bool uart_periph_driver_init(void)
     params_buff_0.semaphore_full_buff = sem_buff_0;
     params_buff_1.semaphore_full_buff = sem_buff_1;
 
-    xTaskCreate(uart_periph_driver_task, "main_uart_task", 4096, NULL, 5, NULL);
-    xTaskCreate(uart_periph_record_data_SD_task, "task_buff_0", 4096, &params_buff_0, 1, NULL);
-    xTaskCreate(uart_periph_record_data_SD_task, "task_buff_1", 4096, &params_buff_1, 2, NULL);
+    xTaskCreate(uart_periph_driver_task, "main_uart_task", 2000, NULL, 5, NULL);
+    xTaskCreate(uart_periph_record_data_SD_task, "task_buff_0", 2000, &params_buff_0, 1, NULL);
+    xTaskCreate(uart_periph_record_data_SD_task, "task_buff_1", 2000, &params_buff_1, 2, NULL);
 
     return true;
 }   

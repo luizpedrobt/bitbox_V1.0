@@ -5,8 +5,10 @@
 #include "freertos/task.h"
 #include "freertos/timers.h"
 #include "driver/gpio.h"
+#include "esp_log.h"
 #include "driver/ledc.h"
 #include "embled.h"
+#include "hal/gpio_types.h"
 
 #include "embled_app.h"
 
@@ -17,6 +19,8 @@
 
 #define CHANNEL_A      LEDC_CHANNEL_0
 #define CHANNEL_B      LEDC_CHANNEL_1
+
+static const char *TAG = "EMBLED";
 
 typedef enum port_pinout_e
 {
@@ -48,7 +52,9 @@ static bool port_read_gpio(uint16_t pin);
 
 static void embled_app_init(void);
 
-static void led_task(void *arg)
+static void embled_gpio_conf(void);
+
+static void led_task(TimerHandle_t xTimer)
 {
     embled_task(NULL);
 }
@@ -66,6 +72,8 @@ static bool port_read_gpio(uint16_t pin)
 
 static void embled_app_init(void)
 {
+    embled_gpio_conf();
+
     static embled_callbacks_t led_callbacks =
     {
         .read_gpio = port_read_gpio,
@@ -75,7 +83,7 @@ static void embled_app_init(void)
     };
 
     embled_init(&led_callbacks);
-    uint16_t duration[PORT_MAX_LEDS] = {100, 404};
+    uint16_t duration[PORT_MAX_LEDS] = {100, 400};
 
     profile_id = embled_new_profile(PORT_MAX_LEDS, EMBLED_INFINITE, duration);
 
@@ -85,11 +93,40 @@ static void embled_app_init(void)
     {
         xTimerStart(led_tmr_handler, 0);
     }
+
+    ESP_LOGI(TAG, "STATUS LED APP: %d", embled_set_mode(embl_app_pins[PORT_STATUS], EMBLED_DRIVER_MODE_DIGITAL, EMBLED_MODE_PULSE_FAST_DOUBLE_ONCE, EMBLED_ACTIVE_HIGH, false));
+    ESP_LOGI(TAG, "STATUS LED APP: %d", embled_set_mode(embl_app_pins[PORT_OPER], EMBLED_DRIVER_MODE_DIGITAL, EMBLED_MODE_BLINK_FAST, EMBLED_ACTIVE_HIGH, false));
+}
+
+static void embled_gpio_conf(void)
+{
+    gpio_config_t io_status_cfg =
+    {
+        .pin_bit_mask = 1ULL << embl_app_pins[PORT_STATUS],
+        .mode = GPIO_MODE_OUTPUT,
+        .pull_up_en = GPIO_PULLUP_DISABLE,
+        .pull_down_en = GPIO_PULLDOWN_ENABLE,
+        .intr_type = GPIO_INTR_DISABLE,
+    };
+
+    gpio_config(&io_status_cfg);
+
+        gpio_config_t io_oper_cfg =
+    {
+        .pin_bit_mask = 1ULL << embl_app_pins[PORT_OPER],
+        .mode = GPIO_MODE_OUTPUT,
+        .pull_up_en = GPIO_PULLUP_DISABLE,
+        .pull_down_en = GPIO_PULLDOWN_ENABLE,
+        .intr_type = GPIO_INTR_DISABLE,
+    };
+
+    gpio_config(&io_oper_cfg);
 }
 
 /* ---------- MAIN APP ------------*/
 
 void embled_app_main(void)
 {
+    ESP_LOGI(TAG, "Init LED app.");
     embled_app_init();
 }

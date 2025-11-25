@@ -1,7 +1,7 @@
 #pragma once
 
 
-#define EMBLED_NUM_LEDS 4    /* Maximum number of automated leds */
+#define EMBLED_NUM_LEDS 2    /* Maximum number of automated leds */
 #define EMBLED_MAX_STATES 10 /* Maximum number of states allowed for the load activation profile */
 #define EMBLED_CYCLE_TIME_MS 100 /* Base time for the LED control timer */
 

@@ -18,7 +18,7 @@
 
 #define STRINGFY(x) #x
 
-#define PREDEFINED_SIZE 5000
+#define PREDEFINED_SIZE 100000
 
 UTL_CBF_DECLARE(uart_rx_buff_0, RX_BUFFER_SIZE);
 UTL_CBF_DECLARE(uart_rx_buff_1, RX_BUFFER_SIZE);

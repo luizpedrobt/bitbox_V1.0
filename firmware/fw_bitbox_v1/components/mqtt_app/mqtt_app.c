@@ -1,7 +1,9 @@
 #include <stdio.h>
+#include <string.h>
 #include "mqtt_app.h"
 #include "mqtt_client.h"
 
+#include "app_config.h"
 #include "esp_log.h"
 #include "esp_system.h"
 
@@ -12,6 +14,27 @@ extern const uint8_t server_cert_start[] asm("_binary_emqxsl_ca_crt_start");
 extern const uint8_t server_cert_end[]   asm("_binary_emqxsl_ca_crt_end");
 
 static const char *TAG = "MQTT";
+
+/* ----------- STATIC FUNCTION DECLARATIONS --------------*/
+
+static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_t event_id, void *event_data);
+
+static bool mqtt_topic_filter(const char *topic, int topic_len, const char *suffix);
+
+/* ----------- STATIC FUNCTION SOURCES --------------*/
+
+static bool mqtt_topic_filter(const char *topic, int topic_len, const char *suffix)
+{
+    int suffix_len = strlen(suffix);
+
+    if(topic_len < suffix_len)
+        return false;
+        
+    if (strncmp(topic + (topic_len - suffix_len), suffix, suffix_len) == 0)
+        return true;
+    
+    return false;
+}
 
 static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_t event_id, void *event_data)
 {
@@ -35,7 +58,7 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
             msg_id = esp_mqtt_client_subscribe(client, "/topic/qos1", 1);
             ESP_LOGI(TAG, "sent subscribe successful, msg_id=%d", msg_id);
 
-            msg_id = esp_mqtt_client_unsubscribe(client, "/topic/qos1");
+            msg_id = esp_mqtt_client_subscribe(client, "/topic/config", 2);
             ESP_LOGI(TAG, "sent unsubscribe successful, msg_id=%d", msg_id);
             break;
 
@@ -57,10 +80,47 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
             ESP_LOGI(TAG, "MQTT_EVENT_PUBLISHED, msg_id=%d", event->msg_id);
             break;
 
-        case MQTT_EVENT_DATA:
+        case MQTT_EVENT_DATA:    
             ESP_LOGI(TAG, "MQTT_EVENT_DATA");
-            printf("TOPIC=%.*s\r\n", event->topic_len, event->topic);
-            printf("DATA=%.*s\r\n", event->data_len, event->data);
+
+            char *safe_payload = (char *)malloc(event->data_len + 1);
+            if(safe_payload == NULL)
+                return;
+
+            memcpy(safe_payload, event->data, event->data_len);
+            safe_payload[event->data_len] = '\0';
+
+            mqtt_msg_t msg;
+            msg.data = safe_payload;
+            msg.size = event->data_len;
+
+            QueueHandle_t target_queue = NULL;
+
+            // if(mqtt_topic_filter(event->topic, event->topic_len, "/config"))
+            //     target_queue = config_queue;
+            
+            // if(mqtt_topic_filter(event->topic, event->topic_len, "/cmd"))
+            //     target_queue = cmd_queue;
+            
+            // if(mqtt_topic_filter(event->topic, event->topic_len, "/ota"))
+            //     target_queue = ota_queue;
+            
+            if(target_queue != NULL)
+            {
+                if(xQueueSend(target_queue, &msg, 0) != pdTRUE)
+                {
+                    free(safe_payload);
+                    ESP_LOGW(TAG, "Erro: Fila cheia para o tópico %.*s", event->topic_len, event->topic);
+                }
+            }
+            else
+            {
+                free(safe_payload);
+                ESP_LOGW(TAG, "Aviso: Mensagem recebida em tópico sem dono.\n");
+            }
+
+            ESP_LOGD(TAG, "TOPIC=%.*s\r\n", event->topic_len, event->topic);
+            ESP_LOGD(TAG, "DATA=%.*s\r\n", event->data_len, event->data);
             break;
 
         case MQTT_EVENT_ERROR:

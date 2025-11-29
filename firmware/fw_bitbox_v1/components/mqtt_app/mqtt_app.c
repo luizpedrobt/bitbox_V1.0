@@ -1,10 +1,13 @@
+#include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
 #include "mqtt_app.h"
 #include "mqtt_client.h"
 
+#include "cJSON.h"
 #include "app_config.h"
 #include "esp_log.h"
+#include "uart_periph.h"
 #include "esp_system.h"
 
 #define MQTT_BROKER_URL "mqtts://qa717179.ala.us-east-1.emqxsl.com"
@@ -19,21 +22,49 @@ static const char *TAG = "MQTT";
 
 static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_t event_id, void *event_data);
 
-static bool mqtt_topic_filter(const char *topic, int topic_len, const char *suffix);
+static void mqtt_topic_filter(const char *topic, const char *payload);
+
+#define X(topic_ref, topic_name, topic_size, topic_handle_func) static void topic_handle_func(const char *suffix, const char *payload);
+    XMACRO_TOPIC_HANDLER_SUB_LISTS
+#undef X
+
+static bool parse_uart_json(const char *json, uart_cfg_t *cfg);
+
+/* ----------- TOPIC HANDLERS DECLARATIONS --------------*/
+
+static const topic_handler_t topic_handlers[] = 
+{
+    #define X(topic_ref, topic_name, topic_size, topic_handle_func) {topic_name, topic_size, topic_handle_func},
+        XMACRO_TOPIC_HANDLER_SUB_LISTS
+    #undef X
+};
 
 /* ----------- STATIC FUNCTION SOURCES --------------*/
 
-static bool mqtt_topic_filter(const char *topic, int topic_len, const char *suffix)
+static void mqtt_topic_filter(const char *topic, const char *payload)
 {
-    int suffix_len = strlen(suffix);
+    for(uint8_t i = 0; i < MAX_TOPICS; i++)
+    {
+        if(strncmp(topic, topic_handlers[i].topic, topic_handlers[i].topic_len) == 0)
+        {
+            topic_handlers[i].func(topic + topic_handlers[i].topic_len, payload);
+        }
+    }
+}
 
-    if(topic_len < suffix_len)
-        return false;
-        
-    if (strncmp(topic + (topic_len - suffix_len), suffix, suffix_len) == 0)
-        return true;
-    
-    return false;
+static void handle_config_message(const char *suffix, const char *payload)
+{
+    ESP_LOGI(TAG, "Sufixo: %s| Dado: %s", suffix, payload);
+
+    uart_cfg_t config;
+    parse_uart_json(payload, &config);
+
+    uart_set_new_configure(&config);
+}
+
+static void handle_ota_message(const char *suffix, const char *payload)
+{
+    ESP_LOGI(TAG, "Sufixo: %s| Dado: %s", suffix, payload);
 }
 
 static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_t event_id, void *event_data)
@@ -49,17 +80,12 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
     {
         case MQTT_EVENT_CONNECTED:
             ESP_LOGI(TAG, "MQTT_EVENT_CONNECTED");
-            msg_id = esp_mqtt_client_publish(client, "/topic/qos1", "data_3", 0, 1, 0);
-            ESP_LOGI(TAG, "sent publish successful, msg_id=%d", msg_id);
-
-            msg_id = esp_mqtt_client_subscribe(client, "/topic/qos0", 0);
-            ESP_LOGI(TAG, "sent subscribe successful, msg_id=%d", msg_id);
-
-            msg_id = esp_mqtt_client_subscribe(client, "/topic/qos1", 1);
-            ESP_LOGI(TAG, "sent subscribe successful, msg_id=%d", msg_id);
-
-            msg_id = esp_mqtt_client_subscribe(client, "/topic/config", 2);
-            ESP_LOGI(TAG, "sent unsubscribe successful, msg_id=%d", msg_id);
+            
+            for(uint8_t i = 0; i < MAX_TOPICS; i++)
+            {
+                msg_id = esp_mqtt_client_subscribe(client, topic_handlers[i].topic, 0);
+                ESP_LOGI(TAG, "Subscrito no tópico %s ! msg_id=%d", topic_handlers[i].topic, msg_id);
+            }
             break;
 
         case MQTT_EVENT_DISCONNECTED:
@@ -68,7 +94,7 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
 
         case MQTT_EVENT_SUBSCRIBED:
             ESP_LOGI(TAG, "MQTT_EVENT_SUBSCRIBED, msg_id=%d", event->msg_id);
-            msg_id = esp_mqtt_client_publish(client, "/topic/qos0", "AA FOLOU A FOLOU IU", 0, 0, 0);
+            msg_id = esp_mqtt_client_publish(client, "topic/config", "AA FOLOU A FOLOU IU", 0, 0, 0);
             ESP_LOGI(TAG, "sent publish successful, msg_id=%d", msg_id);
             break;
 
@@ -83,44 +109,19 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
         case MQTT_EVENT_DATA:    
             ESP_LOGI(TAG, "MQTT_EVENT_DATA");
 
-            char *safe_payload = (char *)malloc(event->data_len + 1);
-            if(safe_payload == NULL)
-                return;
+            ESP_LOGI(TAG, "TOPIC=[%.*s]\r\n", event->topic_len, event->topic);
+            ESP_LOGI(TAG, "DATA=%s | SIZE = %d\r\n", event->data, event->data_len);
 
-            memcpy(safe_payload, event->data, event->data_len);
-            safe_payload[event->data_len] = '\0';
+            char topic[128];
+            char data[256];
+
+            snprintf(topic, sizeof(topic), "%.*s", event->topic_len, event->topic);
+            snprintf(data, sizeof(data), "%.*s", event->data_len, event->data);
 
             mqtt_msg_t msg;
-            msg.data = safe_payload;
-            msg.size = event->data_len;
 
-            QueueHandle_t target_queue = NULL;
+            mqtt_topic_filter(topic, data);
 
-            // if(mqtt_topic_filter(event->topic, event->topic_len, "/config"))
-            //     target_queue = config_queue;
-            
-            // if(mqtt_topic_filter(event->topic, event->topic_len, "/cmd"))
-            //     target_queue = cmd_queue;
-            
-            // if(mqtt_topic_filter(event->topic, event->topic_len, "/ota"))
-            //     target_queue = ota_queue;
-            
-            if(target_queue != NULL)
-            {
-                if(xQueueSend(target_queue, &msg, 0) != pdTRUE)
-                {
-                    free(safe_payload);
-                    ESP_LOGW(TAG, "Erro: Fila cheia para o tópico %.*s", event->topic_len, event->topic);
-                }
-            }
-            else
-            {
-                free(safe_payload);
-                ESP_LOGW(TAG, "Aviso: Mensagem recebida em tópico sem dono.\n");
-            }
-
-            ESP_LOGD(TAG, "TOPIC=%.*s\r\n", event->topic_len, event->topic);
-            ESP_LOGD(TAG, "DATA=%.*s\r\n", event->data_len, event->data);
             break;
 
         case MQTT_EVENT_ERROR:
@@ -152,4 +153,19 @@ void mqtt_main_app(void)
     esp_mqtt_client_register_event(client, ESP_EVENT_ANY_ID, mqtt_event_handler, NULL);
 
     esp_mqtt_client_start(client);
+}
+
+static bool parse_uart_json(const char *json, uart_cfg_t *cfg)
+{   
+    cJSON *root = cJSON_Parse(json);
+    if(!root)
+        return false;
+
+    cfg->uart_num = cJSON_GetObjectItem(root, "uart_num")->valueint;
+    cfg->tx_pin = cJSON_GetObjectItem(root, "tx_gpio")->valueint;
+    cfg->rx_pin = cJSON_GetObjectItem(root, "rx_gpio")->valueint;
+    cfg->baudrate = cJSON_GetObjectItem(root, "baudrate")->valueint;
+
+    cJSON_Delete(root);
+    return true;        
 }

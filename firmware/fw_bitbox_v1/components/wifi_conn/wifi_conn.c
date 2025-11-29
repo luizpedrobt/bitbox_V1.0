@@ -9,8 +9,8 @@
 #include "esp_event.h"
 #include "wifi_conn.h"
 
-#define WIFI_SSID "lab2_2.4Ghz"
-#define WIFI_PASS "lmest123"
+#define WIFI_SSID "FERNANDA 2.4G"
+#define WIFI_PASS "liberdade"
 #define WIFI_MAX_RETRYS 5
 
 #define WIFI_CONNECTED_BIT BIT0

@@ -5,14 +5,15 @@
 #include "cJSON.h"
 #include "portmacro.h"
 
-QueueHandle_t config_msg = NULL;
+QueueHandle_t config_queue = NULL;
 
 static const char *TAG = "APP_CONFIG";
 
-void app_config_init()
-{
-    config_msg = xQueueCreate(10, sizeof(mqtt_msg_t));
-}
+/* ----------- STATIC FUNCTION DECLARATIONS --------------*/
+
+static void config_task(void *param);
+
+/* ----------- STATIC FUNCTION SOURCES --------------*/
 
 static void config_task(void *param)
 {
@@ -20,7 +21,7 @@ static void config_task(void *param)
     
     while(1)
     {
-        if(xQueueReceive(config_msg, &msg, portMAX_DELAY))
+        if(xQueueReceive(config_queue, &msg, portMAX_DELAY))
         {
             ESP_LOGI(TAG, "Recebido no arquivo config: %.*s", msg.size, msg.data);
         }
@@ -28,4 +29,10 @@ static void config_task(void *param)
         free(msg.data);
     }
     
+}
+
+void app_config_init()
+{
+    config_queue = xQueueCreate(10, sizeof(mqtt_msg_t));
+    xTaskCreate(config_task, "config_task", 1024, NULL, 10, NULL);
 }

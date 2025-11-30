@@ -2,7 +2,8 @@
 
 #define XMACRO_TOPIC_HANDLER_SUB_LISTS                           \
         X(CONFIG_REF, "topic/config", 12, handle_config_message) \
-        X(OTA_REF   , "topic/ota"   ,  9, handle_ota_message   )  
+        X(OTA_REF   , "topic/ota"   ,  9, handle_ota_message   ) \
+        X(CMD_REF   , "topic/cmd"   ,  9, handle_cmd_message   )
 
 typedef void (*topic_handler_fn)(const char *suffix, const char *payload);
 

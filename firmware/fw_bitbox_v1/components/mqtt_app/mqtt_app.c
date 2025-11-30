@@ -24,7 +24,7 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
 
 static void mqtt_topic_filter(const char *topic, const char *payload);
 
-#define X(topic_ref, topic_name, topic_size, topic_handle_func) static void topic_handle_func(const char *suffix, const char *payload);
+#define X(topic_ref, topic_name, topic_size, topic_handle_func) static void topic_handle_func##_func(const char *suffix, const char *payload);
     XMACRO_TOPIC_HANDLER_SUB_LISTS
 #undef X
 
@@ -34,7 +34,7 @@ static bool parse_uart_json(const char *json, uart_cfg_t *cfg);
 
 static const topic_handler_t topic_handlers[] = 
 {
-    #define X(topic_ref, topic_name, topic_size, topic_handle_func) {topic_name, topic_size, topic_handle_func},
+    #define X(topic_ref, topic_name, topic_size, topic_handle_func) {topic_name, topic_size, topic_handle_func##_func},
         XMACRO_TOPIC_HANDLER_SUB_LISTS
     #undef X
 };
@@ -52,7 +52,7 @@ static void mqtt_topic_filter(const char *topic, const char *payload)
     }
 }
 
-static void handle_config_message(const char *suffix, const char *payload)
+static void handle_config_message_func(const char *suffix, const char *payload)
 {
     ESP_LOGI(TAG, "Sufixo: %s| Dado: %s", suffix, payload);
 
@@ -62,7 +62,12 @@ static void handle_config_message(const char *suffix, const char *payload)
     uart_set_new_configure(&config);
 }
 
-static void handle_ota_message(const char *suffix, const char *payload)
+static void handle_ota_message_func(const char *suffix, const char *payload)
+{
+    ESP_LOGI(TAG, "Sufixo: %s| Dado: %s", suffix, payload);
+}
+
+static void handle_cmd_message_func(const char *suffix, const char *payload)
 {
     ESP_LOGI(TAG, "Sufixo: %s| Dado: %s", suffix, payload);
 }

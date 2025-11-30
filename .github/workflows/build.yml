@@ -9,23 +9,30 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
-    # O GitHub vai construir seu Dockerfile e usar como ambiente do job
-    container:
-      build:
-        context: ./firmware/fw_bitbox_v1/.devcontainer
-        dockerfile: Dockerfile
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Build firmware
-        working-directory: firmware/fw_bitbox_v1
+      # 1. Build the image from the .devcontainer Dockerfile
+      - name: Build devcontainer image
         run: |
-          idf.py build
+          docker build \
+            -t esp-idf-devcontainer \
+            -f firmware/fw_bitbox_v1/.devcontainer/Dockerfile \
+            firmware/fw_bitbox_v1/.devcontainer
 
-      - name: Upload firmware artifacts
+      # 2. Run the build inside the container manually
+      - name: Run build inside container
+        run: |
+          docker run --rm \
+            -v ${{ github.workspace }}/firmware/fw_bitbox_v1:/project \
+            -w /project \
+            esp-idf-devcontainer \
+            idf.py build
+
+      # 3. Upload artifacts
+      - name: Upload firmware
         uses: actions/upload-artifact@v4
         with:
           name: firmware
-          path: firmware/fw_bitbox_v1/build/
+          path: firmware/fw_bitbox_v1/build

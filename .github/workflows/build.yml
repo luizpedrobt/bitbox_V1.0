@@ -10,7 +10,7 @@ jobs:
 
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Install ESP-IDF
         uses: espressif/esp-idf-ci-action@v1
@@ -21,7 +21,7 @@ jobs:
         run: idf.py build
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: firmware
           path: build/*.bin

@@ -2,28 +2,26 @@ name: Build ESP32 Firmware
 
 on:
   push:
-      branches: ["main"]
+    branches: ["main"]
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
-  steps:
-    - name: Checkout repo
-      uses: actions/checkout@v3
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
 
-    - name: Install ESP-IDF
-      uses: espressif/esp-idf-ci-action@v1
-      with:
-        esp_idf_version: release-v5.5.1
+      - name: Install ESP-IDF
+        uses: espressif/esp-idf-ci-action@v1
+        with:
+          esp_idf_version: release-v5.5.1
 
-    - name: Build Project
-      run: idf.py build
+      - name: Build Project
+        run: idf.py build
 
-    - name: Updolad artifact
-      uses: actions/upload-artifact@v3
-      with:
-        name: firmware
-        path: build/*.bin
-
-
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: firmware
+          path: build/*.bin

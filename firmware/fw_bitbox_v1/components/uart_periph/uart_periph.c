@@ -11,94 +11,62 @@
 #include "esp_log.h"
 #include "driver/uart.h"
 #include "app_config.h"
+#include "esp_timer.h"
 
 #include "uart_periph.h"
-#include "sdmmc_storage.h"
+#include "sd_log.h"
 
 #include "portmacro.h"
 #include "utl_cbf.h"
 
-#define STRINGFY(x) #x
-
-#define PREDEFINED_SIZE 100000
-
-UTL_CBF_DECLARE(uart_rx_buff_0, RX_BUFFER_SIZE);
-UTL_CBF_DECLARE(uart_rx_buff_1, RX_BUFFER_SIZE);
-
 static const char *TAG = "UART_PERIPH";
 
-typedef enum
+UTL_CBF_DECLARE(uart0_cbf, 10000 * 2);
+UTL_CBF_DECLARE(uart1_cbf, 10000 * 2);
+UTL_CBF_DECLARE(uart2_cbf, 10000 * 2);
+
+static utl_cbf_t *uart_circ_buffers[UART_NUM_MAX] =
 {
-    UART_BUFFER_0,
-    UART_BUFFER_1,
-    MAX_BUFFER_NUMS,
-}uart_buff_t;
+    &uart0_cbf,
+    &uart1_cbf,
+    &uart2_cbf
+};
 
 static bool uart_installeds[UART_NUM_MAX] =
 {
     false, false, false,
 };
 
-static TaskHandle_t uart_task_handlers[UART_NUM_MAX] = { 0 };
-
-typedef struct 
-{
-    const char *file_name; // file_name deve conter o nome do arquivo com "/" e sem extensão ".txt ou .bin"
-    uart_buff_t uart_buffer;
-    SemaphoreHandle_t semaphore_full_buff;
-}save_data_params_t;
-
-save_data_params_t params_buff_0 =
-{
-    .file_name = "/BUFF_0",
-    .uart_buffer = UART_BUFFER_0,
-};
-
-save_data_params_t params_buff_1 =
-{
-    .file_name = "/BUFF_1",
-    .uart_buffer = UART_BUFFER_1,
-};
-
-uart_buff_t active_buffer = UART_BUFFER_0;
-
-bool cbf_0_ready_to_fill = true;
-bool cbf_1_ready_to_fill = true;
+static TaskHandle_t uart_task_handlers[UART_NUM_MAX] = { NULL, NULL, NULL };
 
 QueueHandle_t uart_queue[UART_NUM_MAX];
 
 /* ---------- STATIC FUNCTIONS PROTOTYPES ------------*/
 
-static void uart_periph_process_uart_rx(uint8_t c); // uart "cbk" 
-
-static size_t uart_periph_get_buf_data(uint8_t *p_buff, size_t size);
-
-static void uart_periph_record_data_SD_task(void *args);
-
 static void uart_periph_driver_task(void *args);
 
-static void uart_periph_check_bytes_available(void *args);
+static void uart_record_data_task(void *arg);
 
-static uint8_t uart_periph_get_actives(void);
+static void uart_apply_config(const uart_cfg_t *cfg);
 
-// static void uart_periph_check_bytes_available(void *args);
+static void uart_config_save_update(const uart_cfg_t *cfg);
 
 /* ----------  GLOBAL FUNCTIONS SOURCES --------------*/
 
-bool uart_periph_driver_init(void)
-{   
+void uart_set_new_configure(uart_cfg_t *cfg)
+{
+    uart_config_save_update(cfg);
+    uart_apply_config(cfg);
 
-    SemaphoreHandle_t sem_buff_0 = xSemaphoreCreateBinary();
-    SemaphoreHandle_t sem_buff_1 = xSemaphoreCreateBinary();
+    static bool record_task_created = false;
+    if (!record_task_created)
+    {
+        xTaskCreate(uart_record_data_task, "record_data_task", 3000, NULL, 4, NULL);
+        record_task_created = true;
+    }
+}
 
-    params_buff_0.semaphore_full_buff = sem_buff_0;
-    params_buff_1.semaphore_full_buff = sem_buff_1;
-
-    xTaskCreate(uart_periph_record_data_SD_task, "task_buff_0", 2000, &params_buff_0, 1, NULL);
-    xTaskCreate(uart_periph_record_data_SD_task, "task_buff_1", 2000, &params_buff_1, 2, NULL);
-
-    return true;
-}   
+/* --------- STATIC FUNCTIONS SOURCES ------------*/
 
 static void uart_periph_driver_task(void *arg)
 {
@@ -107,7 +75,8 @@ static void uart_periph_driver_task(void *arg)
     ESP_LOGI(TAG, "TASK da UART%d iniciada!", uart_num);
 
     uart_event_t event;
-    uint8_t data[128] = {0};
+    uint8_t data[500] = {0};
+    uint32_t written = 0;
 
     while (1)
     {
@@ -117,8 +86,7 @@ static void uart_periph_driver_task(void *arg)
             {
                 case UART_DATA:
                     int len = uart_read_bytes(uart_num, data, event.size, portMAX_DELAY);
-                    for(int idx = 0; idx < len; idx++)
-                        uart_periph_process_uart_rx(data[idx]);
+                    utl_cbf_put_n(uart_circ_buffers[uart_num], data, len, &written);
 
                     break;
 
@@ -133,129 +101,78 @@ static void uart_periph_driver_task(void *arg)
     }
 }
 
-/* --------- STATIC FUNCTIONS SOURCES ------------*/
-
-static size_t uart_periph_get_buf_data(uint8_t *p_buff, size_t size)
+static void uart_record_data_task(void *arg)
 {
-    utl_cbf_t *buff = (active_buffer == UART_BUFFER_0) ? &uart_rx_buff_1 : &uart_rx_buff_0;
-
-    size_t bytes_to_read = size;
-    size_t bytes_written = 0;
-
-    if(bytes_to_read >= utl_cbf_bytes_available(buff))
-        bytes_to_read = utl_cbf_bytes_available(buff);
-
-    bytes_to_read++;
-    
-    for(bytes_written = 0; bytes_written < bytes_to_read; bytes_written++)
-    {
-        if(utl_cbf_get(buff, &p_buff[bytes_written]) == UTL_CBF_EMPTY)
-        {
-            ESP_LOGW(TAG, "Aborting NOW. %d bytes have been written!", bytes_written);
-            (active_buffer == UART_BUFFER_0) ? (cbf_0_ready_to_fill = true) : (cbf_1_ready_to_fill = true);
-            break;
-        }
-    }
-
-    return bytes_written;
-}
-
-static void uart_periph_process_uart_rx(uint8_t c)
-{
-    utl_cbf_t *buff = (active_buffer == UART_BUFFER_0) ? &uart_rx_buff_0 : &uart_rx_buff_1;
-    save_data_params_t *params = (active_buffer == UART_BUFFER_0) ? &params_buff_0 : &params_buff_1;
-
-    if(utl_cbf_put(buff, c) != UTL_CBF_OK)
-    {
-        if(active_buffer == UART_BUFFER_0)
-        {
-            cbf_0_ready_to_fill = false;
-            cbf_1_ready_to_fill = true;
-
-            active_buffer = UART_BUFFER_1;
-            utl_cbf_put(&uart_rx_buff_1, c);
-
-            ESP_LOGI(TAG, "%s cheio, trocando para %s!",STRINGFY(UART_BUFFER_0), STRINGFY(UART_BUFFER_1));
-            xTaskCreate(uart_periph_check_bytes_available, "task_check_bytes_0", 2000, &params_buff_0, 5, NULL);
-        }
-        else
-        {
-            cbf_0_ready_to_fill = true;
-            cbf_1_ready_to_fill = false;
-
-            active_buffer = UART_BUFFER_0;
-            utl_cbf_put(&uart_rx_buff_0, c);
-
-            ESP_LOGI(TAG, "%s cheio, trocando para %s!",STRINGFY(UART_BUFFER_1), STRINGFY(UART_BUFFER_0));
-            xTaskCreate(uart_periph_check_bytes_available, "task_check_bytes_1", 2000, &params_buff_1, 5, NULL);
-        }
-
-        xSemaphoreGive(params->semaphore_full_buff);
-    }
-}
-
-static void uart_periph_check_bytes_available(void *args)
-{
-    save_data_params_t *data_params = (save_data_params_t *)args;
-    static utl_cbf_t *p_cbf[MAX_BUFFER_NUMS] = {&uart_rx_buff_0, &uart_rx_buff_1};
-
     while (1)
     {
-        if(utl_cbf_bytes_available(p_cbf[data_params->uart_buffer]))
-            xSemaphoreGive(data_params->semaphore_full_buff);
-
-        else
-            vTaskDelete(NULL);
-
-        vTaskDelay(pdMS_TO_TICKS(500));
-    }
-}
-
-static void uart_periph_record_data_SD_task(void *args)
-{
-    save_data_params_t *data_params = (save_data_params_t *)args;
-
-    static uint8_t temp_buff[PREDEFINED_SIZE] = {0};
-
-    while(1)
-    {
-        if(xSemaphoreTake(data_params->semaphore_full_buff, portMAX_DELAY) == pdTRUE)
+        for(uart_port_t uart_num = UART_NUM_0; uart_num < UART_NUM_MAX; uart_num++)
         {
-           ESP_LOGI(TAG, "SD Task (Buff %s): Sinal recebido! Gravando dados.", data_params->file_name);
-            
-            size_t bytes_lidos = uart_periph_get_buf_data(temp_buff, PREDEFINED_SIZE);
-            
-            if (bytes_lidos > 0)
+            if(uart_installeds[uart_num])
             {
-                sdmmc_stor_record_data_txt(temp_buff, bytes_lidos, data_params->file_name);
-                ESP_LOGI(TAG, "SD Task (Buff %s): Gravado %d bytes.", data_params->file_name, bytes_lidos);
-            } 
+                uint32_t bytes_available = utl_cbf_bytes_available(uart_circ_buffers[uart_num]);
+                if(bytes_available >= UART_MAX_PAYLOAD_LEN)
+                {
+                    sd_log_uart_t uart_msg;
+
+                    uart_msg.LOG_PACKET_HEADER_INIT;
+                    uart_msg.time_us = esp_timer_get_time();
+                    uart_msg.log_type = SD_LOG_UART;
+                    uart_msg.periph_num = uart_num;
+
+                    uint32_t len = 0;
+                    utl_cbf_get_n(uart_circ_buffers[uart_num], uart_msg.msg_data, UART_MAX_PAYLOAD_LEN, &len);
+                    uart_msg.msg_len = (uint8_t)len;
+
+                    sd_log_uart_data(&uart_msg);
+                }
+            }
         }
+
+        vTaskDelay(pdMS_TO_TICKS(2000));
     }
 }
 
-void uart_set_new_configure(uart_cfg_t *cfg)
+static void uart_config_save_update(const uart_cfg_t *cfg)
 {
-    uint8_t pos = cfg->uart_num;
-    sys_config_t sys_cfg = 
+    sys_config_t sys_cfg = {0};
+
+    if (app_config_load(&sys_cfg) != ESP_OK)
     {
-        .uart_cnt = uart_periph_get_actives(),
-        .uarts[0] = *cfg,
-    };
+        memset(&sys_cfg, 0, sizeof(sys_cfg));
+    }
+
+    sys_cfg.uarts[cfg->uart_num] = *cfg;
+
+    sys_cfg.uart_cnt = 0;
+    for (int i = 0; i < UART_NUM_MAX; i++)
+    {
+        if (sys_cfg.uarts[i].state)
+            sys_cfg.uart_cnt++;
+    }
 
     app_config_save(&sys_cfg);
+}
 
-    if(!cfg->state)
+static void uart_apply_config(const uart_cfg_t *cfg)
+{
+    if (!cfg->state)
     {
-        uart_driver_delete(cfg->uart_num);
-        ESP_LOGI(TAG, "UART %d desabilitada!\nTX: GPIO%d | RX: GPIO%d livres!", cfg->uart_num, cfg->tx_pin, cfg->rx_pin);
-        uart_installeds[cfg->uart_num] = false;
+        if (uart_installeds[cfg->uart_num])
+        {
+            uart_driver_delete(cfg->uart_num);
+            vTaskDelete(uart_task_handlers[cfg->uart_num]);
+
+            uart_task_handlers[cfg->uart_num] = NULL;
+            uart_installeds[cfg->uart_num] = false;
+
+            ESP_LOGI(TAG, "UART%d desabilitada", cfg->uart_num);
+        }
         return;
     }
 
-    if(uart_installeds[cfg->uart_num])
+    if (uart_installeds[cfg->uart_num])
     {
-        ESP_LOGW(TAG, "UART%d ja instalada!", cfg->uart_num);
+        ESP_LOGW(TAG, "UART%d já instalada", cfg->uart_num);
         return;
     }
 
@@ -264,41 +181,21 @@ void uart_set_new_configure(uart_cfg_t *cfg)
         .baud_rate = cfg->baudrate,
         .data_bits = UART_DATA_8_BITS,
         .stop_bits = UART_STOP_BITS_1,
-        .parity = UART_PARITY_DISABLE,
+        .parity    = UART_PARITY_DISABLE,
         .flow_ctrl = UART_HW_FLOWCTRL_DISABLE,
-        .rx_flow_ctrl_thresh = 122,
     };
 
-    if(uart_param_config(cfg->uart_num, &uart_config) != ESP_OK)
-        return;
+    uart_param_config(cfg->uart_num, &uart_config);
+    uart_set_pin(cfg->uart_num, cfg->tx_pin, cfg->rx_pin,
+                 UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
 
-    ESP_LOGI(TAG, "Parâmetros da UART setados com sucesso!");
-    ESP_LOGI(TAG, "UART: %d | Baudrate: %d", cfg->uart_num, cfg->baudrate);
+    uart_driver_install(cfg->uart_num, 1024, 0, 20,
+                        &uart_queue[cfg->uart_num], 0);
 
-    if(uart_set_pin(cfg->uart_num, cfg->tx_pin, cfg->rx_pin, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE) != ESP_OK)
-        return;
-    
-    ESP_LOGI(TAG, "Hardware da UART setado com sucesso!");
-    ESP_LOGI(TAG, "TX: GPIO%d | RX: GPIO%d", cfg->tx_pin, cfg->rx_pin);
-
-    if(uart_driver_install(cfg->uart_num, 1024, 0, 20, &uart_queue[cfg->uart_num], 0) != ESP_OK)
-        return;
-
-    ESP_LOGI(TAG, "Driver da UART instalado com sucesso!"); 
-
-    xTaskCreate(uart_periph_driver_task, "main_uart_task", 4000, (void*)cfg->uart_num, 5, &uart_task_handlers[cfg->uart_num]);
+    xTaskCreate(uart_periph_driver_task, "uart_rx_task",
+                4000, (void *)cfg->uart_num, 5,
+                &uart_task_handlers[cfg->uart_num]);
 
     uart_installeds[cfg->uart_num] = true;
 }
 
-static uint8_t uart_periph_get_actives(void)
-{
-    uint8_t active = 0;
-    for(uint8_t i = 0; i < UART_NUM_MAX; i++)
-    {
-        if(uart_installeds[i])
-            active++;
-    }
-
-    return active;
-}

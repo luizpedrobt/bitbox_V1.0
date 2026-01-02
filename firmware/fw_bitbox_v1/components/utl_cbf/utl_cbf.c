@@ -60,3 +60,74 @@ utl_cbf_status_t utl_cbf_put(utl_cbf_t *cb, uint8_t c)
 
     return UTL_CBF_OK;
 }
+
+utl_cbf_status_t utl_cbf_get_all(utl_cbf_t *cb, uint8_t *dst, uint32_t *out_len)
+{
+    uint32_t count = 0;
+
+    if (cb->cons == cb->prod)
+    {
+        if (out_len)
+            *out_len = 0;
+        return UTL_CBF_EMPTY;
+    }
+
+    while (cb->cons != cb->prod)
+    {
+        dst[count++] = cb->buffer[cb->cons];
+        cb->cons = CBF_INC(cb->cons, cb->size);
+    }
+
+    if (out_len)
+        *out_len = count;
+
+    return UTL_CBF_OK;
+}
+
+utl_cbf_status_t utl_cbf_get_n(utl_cbf_t *cb, uint8_t *dst, uint32_t n, uint32_t *out_len)
+{
+    uint32_t count = 0;
+
+    if (cb->cons == cb->prod)
+    {
+        if (out_len)
+            *out_len = 0;
+        return UTL_CBF_EMPTY;
+    }
+
+    while ((cb->cons != cb->prod) && (count < n))
+    {
+        dst[count++] = cb->buffer[cb->cons];
+        cb->cons = CBF_INC(cb->cons, cb->size);
+    }
+
+    if (out_len)
+        *out_len = count;
+
+    return UTL_CBF_OK;
+}
+
+utl_cbf_status_t utl_cbf_put_n(utl_cbf_t *cb, const uint8_t *src, uint32_t n, uint32_t *out_written)
+{
+    uint32_t written = 0;
+
+    while (written < n)
+    {
+        size_t next_prod = CBF_INC(cb->prod, cb->size);
+
+        if (next_prod == cb->cons)
+            break;  // buffer cheio
+
+        cb->buffer[cb->prod] = src[written++];
+        cb->prod = next_prod;
+    }
+
+    if (out_written)
+        *out_written = written;
+
+    if (written == 0)
+        return UTL_CBF_FULL;
+
+    return (written == n) ? UTL_CBF_OK : UTL_CBF_PARTIAL;
+}
+

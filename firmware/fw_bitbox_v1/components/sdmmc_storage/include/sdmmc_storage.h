@@ -8,9 +8,10 @@
 #define SDMMC_D3_PIN     GPIO_NUM_12
 
 #define MOUNT_POINT "/sdcard"
+#define PATH_BIN MOUNT_POINT"/log%d.bin"
+#define MAX_FILES_SUPPORTEDS 64
+
 
 bool sdmmc_stor_init(void);
 
-bool sdmmc_stor_record_data_txt(const void *p_data, size_t size, const char *file_name);
-
-bool sdmmc_stor_record_data_bin(const void *p_data, size_t size, const char *file_name);
+bool sdmmc_stor_record_data_bin(const void *p_data, size_t size);

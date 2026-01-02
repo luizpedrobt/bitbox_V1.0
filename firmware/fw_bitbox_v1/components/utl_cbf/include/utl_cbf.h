@@ -7,13 +7,14 @@
 
 #pragma once
 
-typedef enum utl_cbf_status_s
+typedef enum
 {
     UTL_CBF_OK = 0,
-    UTL_CBF_FULL,
     UTL_CBF_EMPTY,
-    UTL_CBF_TMROUT,
+    UTL_CBF_FULL,
+    UTL_CBF_PARTIAL,
 } utl_cbf_status_t;
+
 
 typedef struct utl_cbf_s
 {
@@ -23,9 +24,9 @@ typedef struct utl_cbf_s
     uint8_t *buffer;
 } utl_cbf_t;
 
-#define UTL_CBF_DECLARE(name,_size)        \
+#define UTL_CBF_DECLARE(name,_size)             \
     static uint8_t name##buffer[_size + 1];     \
-    static utl_cbf_t name = {              \
+    static utl_cbf_t name = {                   \
         .prod = 0,                              \
         .cons = 0,                              \
         .size = _size+1,                        \
@@ -68,4 +69,32 @@ utl_cbf_status_t utl_cbf_init(utl_cbf_t *cb, uint8_t *area, uint32_t size);
  @return ver @ref cbf_status_s
 */
 utl_cbf_status_t utl_cbf_put(utl_cbf_t *cb, uint8_t c);
+
+/**
+ * @brief Coleta todos os bytes do buffer circular.
+ * @param[in] cb - ponteiro para o buffer circular.
+ * @param[out] dst - ponteiro para o buffer de saída
+ * @param[out] out_len - número de bytes retirados
+ */
+utl_cbf_status_t utl_cbf_get_all(utl_cbf_t *cb, uint8_t *dst, uint32_t *out_len);
+
+/**
+ * @brief Coleta todos os bytes do buffer circular.
+ * @param[in] cb - ponteiro para o buffer circular.
+ * @param[out] dst - ponteiro para o buffer de saída
+ * @param[in] n - número de bytes para serem lidos
+ * @param[out] out_len - número de bytes retirados
+ */
+utl_cbf_status_t utl_cbf_get_n(utl_cbf_t *cb, uint8_t *dst, uint32_t n, uint32_t *out_len);
+
+/**
+ * @brief Coleta todos os bytes do buffer circular.
+ * @param[in] cb - ponteiro para o buffer circular.
+ * @param[out] src - ponteiro para o buffer de entrada
+ * @param[in] n - número de bytes para serem escritos
+ * @param[out] out_len - número de bytes escritos
+ */
+utl_cbf_status_t utl_cbf_put_n(utl_cbf_t *cb, const uint8_t *src, uint32_t n, uint32_t *out_written);
+
+
 

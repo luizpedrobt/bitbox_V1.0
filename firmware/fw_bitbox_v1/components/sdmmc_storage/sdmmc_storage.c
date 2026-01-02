@@ -21,6 +21,7 @@ sdmmc_slot_config_t slot_cfg;
 sdmmc_card_t *card;
 
 static const char *TAG = "SDMMC_STORAGE";
+static char path[MAX_FILES_SUPPORTEDS] = { 0 };
 
 static void sdmmc_cfg_host(void)
 {
@@ -80,6 +81,34 @@ static bool sdmmc_mount_device(void)
     return true;
 }
 
+static bool sdmmc_stor_get_log_name(char *output_name, size_t len)
+{
+    FILE *f;
+    uint8_t idx = 1;
+
+    while (1)
+    {
+        snprintf(output_name, len, PATH_BIN, idx);
+
+        f = fopen(output_name, "rb");
+        if (f == NULL)
+        {
+            ESP_LOGI(TAG, "Arquvo log%d.bin não existe! Criando...", idx);
+            return true;
+        }
+
+        // existe → fecha e tenta o próximo 
+        fclose(f);
+        idx++;
+
+        if(idx == MAX_FILES_SUPPORTEDS)
+        {
+            ESP_LOGE(TAG, "Número máximo de arquivos alcançado! Extraia os arquivos do cartão!");
+            return false;
+        }
+    }
+}
+
 bool sdmmc_stor_init(void)
 {
     sdmmc_cfg_host();
@@ -88,36 +117,19 @@ bool sdmmc_stor_init(void)
         ESP_LOGE(TAG, "Erro ao montar device SDMMC!");
         return false;
     }
+
+    if(!sdmmc_stor_get_log_name(path, sizeof(path)))
+    {
+        ESP_LOGE(TAG, "Erro ao abrir arquivo!");
+        return false;
+    }
       
     ESP_LOGI(TAG, "SDMMC montado com sucesso!");
     return true;
 }
 
-bool sdmmc_stor_record_data_txt(const void *p_data, size_t size, const char *file_name)
+bool sdmmc_stor_record_data_bin(const void *p_data, size_t size)
 {
-    char path[128] = {0};
-    snprintf(path, sizeof(path), "%s%s.txt", MOUNT_POINT, file_name);
-
-    FILE *f = fopen(path, "a");
-    if(f == NULL)
-    {
-        ESP_LOGE(TAG, "Erro ao abrir arquivo!");
-        return false;
-    }
-
-    size_t bytes_written = fwrite(p_data, 1, size, f);
-    ESP_LOGI(TAG, "%zu bytes gravados com sucesso em %s", bytes_written, path);
-
-    fclose(f);
-
-    return true;
-}
-
-bool sdmmc_stor_record_data_bin(const void *p_data, size_t size, const char *file_name)
-{
-    char path[128] = {0};
-    snprintf(path, sizeof(path), "%s%s.bin", MOUNT_POINT, file_name);
-
     FILE *f = fopen(path, "ab");
     if(f == NULL)
     {

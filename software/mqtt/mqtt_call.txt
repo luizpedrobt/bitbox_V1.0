@@ -1,0 +1,6 @@
+python3 mqtt_config_gpio.py \
+  --gpio 33 \
+  --mode INPUT \
+  --intr ANYEDGE \
+  --pullup ENABLE \
+  --pulldown DISABLE

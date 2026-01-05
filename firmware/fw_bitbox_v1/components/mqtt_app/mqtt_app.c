@@ -7,6 +7,7 @@
 #include "cJSON.h"
 #include "esp_log.h"
 #include "uart_periph.h"
+#include "gpio_peripheral.h"
 #include "esp_system.h"
 
 #define MQTT_BROKER_URL "mqtts://qa717179.ala.us-east-1.emqxsl.com"
@@ -29,6 +30,8 @@ static void mqtt_topic_filter(const char *topic, const char *payload);
 
 static bool parse_uart_json(const char *json, uart_cfg_t *cfg);
 
+static bool parse_gpio_json(const char *json, gpio_cfg_t *cfg);
+
 /* ----------- TOPIC HANDLERS DECLARATIONS --------------*/
 
 static const topic_handler_t topic_handlers[] = 
@@ -44,19 +47,43 @@ static void mqtt_topic_filter(const char *topic, const char *payload)
 {
     for(uint8_t i = 0; i < MAX_TOPICS; i++)
     {
-        if(strncmp(topic, topic_handlers[i].topic, topic_handlers[i].topic_len) == 0)
+        uint16_t len = topic_handlers[i].topic_len;
+
+        if (strncmp(topic, topic_handlers[i].topic, len) == 0 && topic[len] == '/')
         {
-            topic_handlers[i].func(topic + topic_handlers[i].topic_len, payload);
+            topic_handlers[i].func(topic + len, payload);
+            return;
         }
     }
 }
 
+
 static void handle_config_message_func(const char *suffix, const char *payload)
 {
-    uart_cfg_t config;
-    parse_uart_json(payload, &config);
+    ESP_LOGI(TAG, "SUFFIX=[%s]", suffix);
 
-    uart_set_new_configure(&config);
+    if(strcmp(suffix, "/uart") == 0)
+    {
+        uart_cfg_t uart_config;
+
+        parse_uart_json(payload, &uart_config);
+        uart_set_new_configure(&uart_config);
+        ESP_LOGI(TAG, "Nova mensagem de configuração de UART!");
+    }
+
+    else if(strcmp(suffix, "/gpio") == 0)
+    {
+        gpio_cfg_t gpio_config;
+
+        parse_gpio_json(payload, &gpio_config);
+        gpio_set_new_configure(&gpio_config);
+        ESP_LOGI(TAG, "Nova mensagem de configuração de GPIO!");
+    }
+
+    else
+    {
+        ESP_LOGW(TAG, "Mensagem de configuração não suportada!");
+    }
 }
 
 static void handle_ota_message_func(const char *suffix, const char *payload)
@@ -115,6 +142,8 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
             snprintf(topic, sizeof(topic), "%.*s", event->topic_len, event->topic);
             snprintf(data, sizeof(data), "%.*s", event->data_len, event->data);
 
+            ESP_LOGI(TAG, "TOPIC=[%s]", topic);
+
             mqtt_topic_filter(topic, data);
 
             break;
@@ -164,4 +193,21 @@ static bool parse_uart_json(const char *json, uart_cfg_t *cfg)
 
     cJSON_Delete(root);
     return true;        
+}
+
+static bool parse_gpio_json(const char *json, gpio_cfg_t *cfg)
+{
+    cJSON *root = cJSON_Parse(json);
+    if(!root)
+        return false;
+
+    cfg->state = cJSON_GetObjectItem(root, "state")->valueint;
+    cfg->mode = cJSON_GetObjectItem(root, "mode")->valueint;
+    cfg->gpio_num = cJSON_GetObjectItem(root, "gpio_num")->valueint;
+    cfg->pull_up_en = cJSON_GetObjectItem(root, "pull_up_en")->valueint;
+    cfg->pull_down_en = cJSON_GetObjectItem(root, "pull_down_en")->valueint;
+    cfg->intr_type = cJSON_GetObjectItem(root, "intr_type")->valueint;
+
+    cJSON_Delete(root);
+    return true;    
 }

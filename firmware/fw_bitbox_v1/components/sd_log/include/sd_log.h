@@ -4,7 +4,7 @@
 
 #define LOG_PACKET_HEADER_INIT header = 0xdeadbeef
 
-#define UART_MAX_PAYLOAD_LEN 35
+#define UART_MAX_PAYLOAD_LEN 1000
 
 typedef enum sd_log_type_e
 {
@@ -48,7 +48,7 @@ typedef struct PACKED sd_log_uart_s
     uint64_t time_us;
     uint8_t log_type;
     uint8_t periph_num;
-    uint8_t msg_len;
+    uint16_t msg_len;
     uint8_t msg_data[UART_MAX_PAYLOAD_LEN];
 } sd_log_uart_t;
 

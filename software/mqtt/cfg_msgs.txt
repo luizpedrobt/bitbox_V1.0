@@ -1,0 +1,15 @@
+
+MODELO DE MENSAGEM MQTT PARA CONFIGURAÇÃO DA UART:
+{ 
+  "state"   : 1,
+  "uart_num": 2,
+  "rx_gpio" : 1,
+  "tx_gpio" : 2,
+  "baudrate": 115200
+}
+
+MODELO DE MENSAGEM MQTT PARA CONFIGURAÇÃO DO GPIO:
+{
+    "state"
+    // TODO
+}

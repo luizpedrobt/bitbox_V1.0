@@ -1,15 +1,17 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include "esp_log.h"
-#include "app_config.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/queue.h"
 #include "hal/uart_types.h"
 #include "nvs.h"
 #include "uart_periph.h"
+#include "gpio_peripheral.h"
 #include "nvs_flash.h"
 #include "esp_err.h"
 #include "portmacro.h"
+
+#include "app_config.h"
 
 static const char *TAG = "APP_CONFIG";
 
@@ -17,12 +19,12 @@ static const char *TAG = "APP_CONFIG";
     XMACRO_SYS_CONFIG
 #undef X
 
-esp_err_t app_config_load(sys_config_t *cfg)
+esp_err_t app_config_uart_load(sys_config_uart_t *uart_cfg)
 {
     nvs_handle_t nvs_handler;
     esp_err_t err;
-    uint8_t type;
-    size_t size;
+
+    size_t size = sizeof(sys_config_uart_t);
 
     err = nvs_open(STORAGE_NAMESPACE, NVS_READONLY, &nvs_handler);
     if(err != ESP_OK)
@@ -31,60 +33,7 @@ esp_err_t app_config_load(sys_config_t *cfg)
         return err;
     }
 
-    err = nvs_get_u8(nvs_handler, CONFIG_TYPE_KEY, &type);
-    if(err != ESP_OK)
-    {
-        ESP_LOGE(TAG, "Erro ao ler tipo de configuração!");
-        return err;
-    }
-
-    cfg->cfg_type = (sys_config_type_t)type;
-
-    switch (cfg->cfg_type)
-    {
-        case UART_CFG:
-            size = sizeof(sys_config_uart_t);
-            err = nvs_get_blob(nvs_handler, CONFIG_DATA_KEY, &cfg->uart_cfg, &size);
-            if(err != ESP_OK)
-            {
-                ESP_LOGE(TAG, "Erro ao ler configuração da UART!");
-                return err;
-            }
-        break;
-
-        case GPIO_CFG:
-            size = sizeof(sys_config_gpio_t);
-            err = nvs_get_blob(nvs_handler, CONFIG_DATA_KEY, &cfg->gpio_cfg, &size);
-            if(err != ESP_OK)
-            {
-                ESP_LOGE(TAG, "Erro ao ler configuração da GPIO!");
-                return err;
-            }
-        break;
-        
-        default:
-            ESP_LOGE(TAG, "Configuração não suportada!");
-            err = ESP_ERR_INVALID_ARG;
-            return err;
-    }
-    
-    nvs_close(nvs_handler);
-    return err;
-}
-
-void app_config_uart_load(sys_config_uart_t *uart_cfg)
-{
-    nvs_handle_t nvs_handler;
-    esp_err_t err;
-
-    err = nvs_open(STORAGE_NAMESPACE, NVS_READONLY, &nvs_handler);
-    if(err != ESP_OK)
-    {
-        ESP_LOGE(TAG, "Erro ao abrir configuração anterior!");
-        return err;
-    }
-
-    err = nvs_get_blob(nvs_handler, uart_cfg_namespace, uart_cfg, sizeof(sys_config_uart_t));
+    err = nvs_get_blob(nvs_handler, uart_cfg_namespace, uart_cfg, &size);
     if(err != ESP_OK)
     {
         ESP_LOGE(TAG, "Erro ao ler configuração da UART!");
@@ -95,10 +44,12 @@ void app_config_uart_load(sys_config_uart_t *uart_cfg)
     return err;
 }
 
-void app_config_gpio_load(sys_config_gpio_t *gpio_cfg)
+esp_err_t app_config_gpio_load(sys_config_gpio_t *gpio_cfg)
 {
     nvs_handle_t nvs_handler;
     esp_err_t err;
+
+    size_t size = sizeof(sys_config_gpio_t);
 
     err = nvs_open(STORAGE_NAMESPACE, NVS_READONLY, &nvs_handler);
     if(err != ESP_OK)
@@ -107,10 +58,10 @@ void app_config_gpio_load(sys_config_gpio_t *gpio_cfg)
         return err;
     }
 
-    err = nvs_get_blob(nvs_handler, gpio_cfg_namespace, gpio_cfg, sizeof(sys_config_gpio_t));
+    err = nvs_get_blob(nvs_handler, gpio_cfg_namespace, gpio_cfg, &size);
     if(err != ESP_OK)
     {
-        ESP_LOGE(TAG, "Erro ao ler configuração da UART!");
+        ESP_LOGE(TAG, "Erro ao ler configuração do GPIO!");
         return err;
     }
  
@@ -119,10 +70,12 @@ void app_config_gpio_load(sys_config_gpio_t *gpio_cfg)
 }
 
 
-void app_config_uart_save(const sys_config_uart_t *uart_cfg)
+esp_err_t app_config_uart_save(const sys_config_uart_t *uart_cfg)
 {
     nvs_handle_t nvs_handler;
     esp_err_t err;
+
+    size_t size = sizeof(sys_config_uart_t);
 
     err = nvs_open(STORAGE_NAMESPACE, NVS_READWRITE, &nvs_handler);
     if(err != ESP_OK)
@@ -131,7 +84,7 @@ void app_config_uart_save(const sys_config_uart_t *uart_cfg)
         return err;
     }
 
-    err = nvs_set_blob(nvs_handler, uart_cfg_namespace, uart_cfg, sizeof(sys_config_uart_t));
+    err = nvs_set_blob(nvs_handler, uart_cfg_namespace, uart_cfg, size);
     if(err != ESP_OK)
     {
         ESP_LOGE(TAG, "Erro ao salvar configurações de UART!");
@@ -149,10 +102,12 @@ void app_config_uart_save(const sys_config_uart_t *uart_cfg)
     return err;
 }
 
-void app_config_gpio_save(const sys_config_gpio_t *gpio_cfg)
+esp_err_t app_config_gpio_save(const sys_config_gpio_t *gpio_cfg)
 {
     nvs_handle_t nvs_handler;
     esp_err_t err;
+
+    size_t size = sizeof(sys_config_gpio_t);
 
     err = nvs_open(STORAGE_NAMESPACE, NVS_READWRITE, &nvs_handler);
     if(err != ESP_OK)
@@ -161,7 +116,7 @@ void app_config_gpio_save(const sys_config_gpio_t *gpio_cfg)
         return err;
     }
 
-    err = nvs_set_blob(nvs_handler, gpio_cfg_namespace, gpio_cfg, sizeof(sys_config_gpio_t));
+    err = nvs_set_blob(nvs_handler, gpio_cfg_namespace, gpio_cfg, size);
     if(err != ESP_OK)
     {
         ESP_LOGE(TAG, "Erro ao salvar configurações de UART!");

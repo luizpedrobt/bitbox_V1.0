@@ -14,13 +14,16 @@
 #include "freertos/task.h"
 #include "esp_log.h"
 #include "esp_system.h"
-#include "app_config.h"
 
 #include "sdmmc_storage.h"
 #include "uart_periph.h"
+#include "gpio_peripheral.h"
 #include "wifi_conn.h"
 #include "mqtt_app.h"
 #include "sd_log.h"
+
+#include "app_config.h"
+
 
 static const char *TAG = "MAIN_APP";
 
@@ -41,13 +44,13 @@ static void app_init_periph(void)
     uart_periph_initialized = uart_periph_driver_init();
 
     esp_err_t ret = nvs_flash_init();
-    ret = nvs_flash_init();
     ESP_ERROR_CHECK(ret);
 
     app_config_main();
+    wifi_conn_init();
     sd_log_main();
 
-    wifi_conn_init();
+    gpio_periph_main();
     embled_app_main();
     mqtt_main_app();
 }

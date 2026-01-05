@@ -95,7 +95,7 @@ static void embled_app_init(void)
     }
 
     ESP_LOGI(TAG, "STATUS LED APP: %d", embled_set_mode(embl_app_pins[PORT_STATUS], EMBLED_DRIVER_MODE_DIGITAL, EMBLED_MODE_BLINK_SLOW, EMBLED_ACTIVE_HIGH, false));
-    ESP_LOGI(TAG, "STATUS LED APP: %d", embled_set_mode(embl_app_pins[PORT_OPER], EMBLED_DRIVER_MODE_DIGITAL, EMBLED_MODE_BLINK_FAST, EMBLED_ACTIVE_HIGH, false));
+    ESP_LOGI(TAG, "OPER LED APP:   %d", embled_set_mode(embl_app_pins[PORT_OPER]  , EMBLED_DRIVER_MODE_DIGITAL, EMBLED_MODE_BLINK_FAST, EMBLED_ACTIVE_HIGH, false));
 }
 
 static void embled_gpio_conf(void)
@@ -111,7 +111,7 @@ static void embled_gpio_conf(void)
 
     gpio_config(&io_status_cfg);
 
-        gpio_config_t io_oper_cfg =
+    gpio_config_t io_oper_cfg =
     {
         .pin_bit_mask = 1ULL << embl_app_pins[PORT_OPER],
         .mode = GPIO_MODE_OUTPUT,

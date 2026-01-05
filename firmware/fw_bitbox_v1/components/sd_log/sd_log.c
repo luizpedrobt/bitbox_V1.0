@@ -3,6 +3,7 @@
 #include <stdbool.h>
 
 #include "freertos/FreeRTOS.h"
+#include "freertos/projdefs.h"
 #include "freertos/queue.h"
 
 #include "sd_log.h"
@@ -88,11 +89,9 @@ static void sd_log_task(void *arg)
 {
     sd_log_msg_t msg;
 
-    ESP_LOGI(TAG, "Log TASK iniciada!");
-
     while(1)
     {
-        if(xQueueReceive(sd_log_queue, &msg, portMAX_DELAY) == pdTRUE)
+        if(xQueueReceive(sd_log_queue, &msg, pdMS_TO_TICKS(2000)) == pdTRUE)
         {
             switch (msg.type)
             {
@@ -103,7 +102,7 @@ static void sd_log_task(void *arg)
 
                 case SD_LOG_GPIO:
                     sdmmc_stor_record_data_bin(&msg.gpio, sizeof(msg.gpio));
-                    ESP_LOGI(TAG, "Estago do GPIO%d gravado com sucesso!", msg.gpio.periph_num);
+                    ESP_LOGI(TAG, "Estado do GPIO%d gravado com sucesso!", msg.gpio.periph_num);
                     break;
                 
                 default:
@@ -111,11 +110,18 @@ static void sd_log_task(void *arg)
                     break;
             }
         }
+
+        else
+        {
+            ESP_LOGI(TAG, "Esperando dados!");
+        }
+
+        vTaskDelay(pdMS_TO_TICKS(200));
     }
 }
 
 void sd_log_main(void)
 {
     sd_log_queue = xQueueCreate(SD_LOG_QUEUE_DEPTH, sizeof(sd_log_msg_t));
-    xTaskCreate(sd_log_task, "log_task", 2000, NULL, 9, NULL);
+    xTaskCreate(sd_log_task, "log_task", 4096, NULL, 9, NULL);
 }

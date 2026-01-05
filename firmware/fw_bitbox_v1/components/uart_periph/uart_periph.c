@@ -10,14 +10,17 @@
 #include "esp_err.h"
 #include "esp_log.h"
 #include "driver/uart.h"
-#include "app_config.h"
+
 #include "esp_timer.h"
 
 #include "uart_periph.h"
+#include "gpio_peripheral.h"
 #include "sd_log.h"
 
 #include "portmacro.h"
 #include "utl_cbf.h"
+
+#include "app_config.h"
 
 static const char *TAG = "UART_PERIPH";
 
@@ -121,7 +124,7 @@ static void uart_record_data_task(void *arg)
 
                     uint32_t len = 0;
                     utl_cbf_get_n(uart_circ_buffers[uart_num], uart_msg.msg_data, UART_MAX_PAYLOAD_LEN, &len);
-                    uart_msg.msg_len = (uint8_t)len;
+                    uart_msg.msg_len = (uint16_t)len;
 
                     sd_log_uart_data(&uart_msg);
                 }
@@ -134,23 +137,23 @@ static void uart_record_data_task(void *arg)
 
 static void uart_config_save_update(const uart_cfg_t *cfg)
 {
-    sys_config_t sys_cfg = {0};
+    sys_config_uart_t uart_cfg = {0};
 
-    if (app_config_load(&sys_cfg) != ESP_OK)
+    if (app_config_uart_load(&uart_cfg) != ESP_OK)
     {
-        memset(&sys_cfg, 0, sizeof(sys_cfg));
+        memset(&uart_cfg, 0, sizeof(uart_cfg));
     }
 
-    sys_cfg.uarts[cfg->uart_num] = *cfg;
+    uart_cfg.uarts[cfg->uart_num] = *cfg;
 
-    sys_cfg.uart_cnt = 0;
+    uart_cfg.uart_cnt = 0;
     for (int i = 0; i < UART_NUM_MAX; i++)
     {
-        if (sys_cfg.uarts[i].state)
-            sys_cfg.uart_cnt++;
+        if (uart_cfg.uarts[i].state)
+            uart_cfg.uart_cnt++;
     }
 
-    app_config_save(&sys_cfg);
+    app_config_uart_save(&uart_cfg);
 }
 
 static void uart_apply_config(const uart_cfg_t *cfg)
@@ -196,6 +199,13 @@ static void uart_apply_config(const uart_cfg_t *cfg)
                 4000, (void *)cfg->uart_num, 5,
                 &uart_task_handlers[cfg->uart_num]);
 
+    ESP_LOGI(TAG, "UART%d instalada! Tx: GPIO%d | Rx: GPIO%d a %dbps", cfg->uart_num, cfg->tx_pin, cfg->rx_pin, cfg->baudrate);
+
     uart_installeds[cfg->uart_num] = true;
+}
+
+bool uart_periph_driver_init(void)
+{
+    return true;
 }
 

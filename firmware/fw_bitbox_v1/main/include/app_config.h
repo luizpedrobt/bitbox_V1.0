@@ -1,16 +1,6 @@
 #pragma once
 
-#include "soc/gpio_num.h"
 #define STORAGE_NAMESPACE "storage"
-
-#define CONFIG_TYPE_KEY  "cfg_type"
-#define CONFIG_DATA_KEY  "cfg_data"
-
-
-#include "hal/uart_types.h"
-#include "uart_periph.h"
-#include "gpio_periph.h"
-#include "esp_err.h"
 
 #define XMACRO_SYS_CONFIG                                                        \
         X(0, UART_CFG, sys_config_uart_t, uart_cfg, "uart_cfg", app_config_uart) \
@@ -34,14 +24,14 @@ typedef struct sys_config_uart_s
 typedef struct sys_config_gpio_s
 {
     uint8_t gpio_cnt;
-    gpio_config_t gpios[GPIO_BOARD_MAX];
+    gpio_cfg_t gpios[GPIO_BOARD_MAX];
 } sys_config_gpio_t;
 
-#define X(IDX, PERIPH_CFG, ST_PERIPH, CFG_VAR, NAMESPACE, FUNC_PROT) void FUNC_PROT##_save(const ST_PERIPH *CFG_VAR);
+#define X(IDX, PERIPH_CFG, ST_PERIPH, CFG_VAR, NAMESPACE, FUNC_PROT) esp_err_t FUNC_PROT##_save(const ST_PERIPH *CFG_VAR);
     XMACRO_SYS_CONFIG
 #undef X
 
-#define X(IDX, PERIPH_CFG, ST_PERIPH, CFG_VAR, NAMESPACE, FUNC_PROT) void FUNC_PROT##_load(ST_PERIPH *CFG_VAR);
+#define X(IDX, PERIPH_CFG, ST_PERIPH, CFG_VAR, NAMESPACE, FUNC_PROT) esp_err_t FUNC_PROT##_load(ST_PERIPH *CFG_VAR);
     XMACRO_SYS_CONFIG
 #undef X
 

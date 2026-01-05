@@ -28,11 +28,11 @@ messages = [
         "baudrate": 57600
     },
     {
-        "state": 0,
+        "state": 1,
         "uart_num": 2,
         "rx_gpio": 33,
         "tx_gpio": 34,
-        "baudrate": 9600
+        "baudrate": 115200
     }
 ]
 

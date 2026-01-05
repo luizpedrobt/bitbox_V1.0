@@ -137,7 +137,7 @@ static void uart_record_data_task(void *arg)
 
 static void uart_config_save_update(const uart_cfg_t *cfg)
 {
-    sys_config_uart_t uart_cfg = {0};
+    sys_config_uart_t uart_cfg = { 0 };
 
     if (app_config_uart_load(&uart_cfg) != ESP_OK)
     {

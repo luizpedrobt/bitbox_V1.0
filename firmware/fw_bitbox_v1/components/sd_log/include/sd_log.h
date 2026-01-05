@@ -4,7 +4,7 @@
 
 #define LOG_PACKET_HEADER_INIT header = 0xdeadbeef
 
-#define UART_MAX_PAYLOAD_LEN 1000
+#define UART_MAX_PAYLOAD_LEN 1024
 
 typedef enum sd_log_type_e
 {

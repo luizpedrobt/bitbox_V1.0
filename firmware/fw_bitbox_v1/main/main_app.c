@@ -42,6 +42,7 @@ static void app_init_periph(void)
 
     sdmmc_initialized = sdmmc_stor_init();
     uart_periph_initialized = uart_periph_driver_init();
+    gpio_periph_main();
 
     esp_err_t ret = nvs_flash_init();
     ESP_ERROR_CHECK(ret);
@@ -50,7 +51,6 @@ static void app_init_periph(void)
     wifi_conn_init();
     sd_log_main();
 
-    gpio_periph_main();
     embled_app_main();
     mqtt_main_app();
 }

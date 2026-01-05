@@ -20,10 +20,15 @@
 
 #define GPIO_EVT_QUEUE_LEN 64
 
+#define GPIO_DEBOUNCE_US 50000  
+
+static uint64_t last_evt_time[GPIO_BOARD_MAX] = {0};
+static uint8_t  last_level[GPIO_BOARD_MAX]   = {0xFF};
+
 static QueueHandle_t gpio_evt_queue;
 
-bool gpio_installeds[GPIO_BOARD_MAX] = { false };
-const int gpio_pins[GPIO_BOARD_MAX] = { 1 , 2, 3, 4, 5, 33, 34, 35, 37, 38 };
+bool gpio_installeds[GPIO_BOARD_MAX] = { false, false, false, false, false, false, false, false, false, false };
+static const int gpio_pins[GPIO_BOARD_MAX] = { 1 , 2, 3, 4, 5, 33, 34, 35, 37, 38 };
 
 static const char *TAG = "GPIO_PERIPH";
 
@@ -42,7 +47,7 @@ static void gpio_apply_config(const gpio_cfg_t *cfg);
 
 static void gpio_config_save_update(const gpio_cfg_t *cfg);
 
-static void IRAM_ATTR gpio_isr_handler(void *args);
+static void gpio_isr_handler(void *args);
 
 static void gpio_log_task(void *args);
 
@@ -53,14 +58,17 @@ void gpio_set_new_configure(gpio_cfg_t *cfg)
     gpio_config_save_update(cfg);
     gpio_apply_config(cfg);
 
-    
+    static bool record_task_created = false;
+    if (!record_task_created)
+    {
+        xTaskCreate(gpio_log_task, "gpio_log_task", 4095, NULL, 5, NULL);
+        record_task_created = true;
+    }
 }
 
 void gpio_periph_main(void)
 {
     gpio_evt_queue = xQueueCreate( GPIO_EVT_QUEUE_LEN, sizeof(gpio_evt_t));
-
-    xTaskCreate(gpio_log_task, "gpio_log_task", 2000, NULL, 5, NULL);
 }
 
 /* --------- STATIC FUNCTIONS SOURCES ------------*/
@@ -151,21 +159,38 @@ static void gpio_log_task(void *args)
 
     while (1)
     {
-        if (xQueueReceive(gpio_evt_queue, &evt, pdMS_TO_TICKS(2000)))
+        if (xQueueReceive(gpio_evt_queue, &evt, portMAX_DELAY))
         {
-            ESP_LOGI(TAG, "GPIO%d | level=%d | t=%lld us", evt.gpio, evt.level, evt.time_us);
-            sd_log_gpio_t gpio_msg = { 0 };
+            uint32_t gpio = evt.gpio;
+            uint64_t now  = evt.time_us;
+
+            if (gpio >= GPIO_BOARD_MAX) {
+                continue;
+            }
+
+            if ((now - last_evt_time[gpio]) < GPIO_DEBOUNCE_US) {
+                continue;  
+            }
+
+            if (last_level[gpio] == evt.level) {
+                continue;
+            }
+
+            last_evt_time[gpio] = now;
+            last_level[gpio]    = evt.level;
+
+            ESP_LOGI(TAG, "GPIO%d | level=%d | t=%lld us", gpio, evt.level, now);
+
+            sd_log_gpio_t gpio_msg = {0};
 
             gpio_msg.LOG_PACKET_HEADER_INIT;
-            gpio_msg.time_us = evt.time_us;
-            gpio_msg.type = SD_LOG_GPIO;
-            gpio_msg.periph_num = evt.gpio; 
-            gpio_msg.edge = evt.level;
-            gpio_msg.level = evt.level;
+            gpio_msg.time_us    = now;
+            gpio_msg.type       = SD_LOG_GPIO;
+            gpio_msg.periph_num = gpio;
+            gpio_msg.edge       = evt.level;
+            gpio_msg.level      = evt.level;
 
             sd_log_gpio_data(&gpio_msg);
         }
-
-        vTaskDelay(pdMS_TO_TICKS(200));
     }
 }

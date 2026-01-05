@@ -15,6 +15,8 @@
 
 static const char *TAG = "APP_CONFIG";
 
+static const int gpio_pins[GPIO_BOARD_MAX] = { 1 , 2, 3, 4, 5, 33, 34, 35, 37, 38 };
+
 #define X(IDX, PERIPH_CFG, ST_PERIPH, CFG_VAR, NAMESPACE, FUNC_PROT) const char *CFG_VAR##_namespace = NAMESPACE;
     XMACRO_SYS_CONFIG
 #undef X
@@ -146,7 +148,7 @@ void app_config_main(void)
 
     ESP_LOGI(TAG, "Configurações de UART carregadas: %d UART(s)", uart_cfg.uart_cnt);
 
-    for (uint8_t i = 0; i < uart_cfg.uart_cnt && i < UART_NUM_MAX; i++)
+    for (uint8_t i = 0; i < UART_NUM_MAX; i++)
     {
         if (uart_cfg.uarts[i].state)
         {
@@ -160,11 +162,11 @@ void app_config_main(void)
 
     ESP_LOGI(TAG, "Configurações de GPIO carregadas: %d GPIO(s)", gpio_cfg.gpio_cnt);
 
-    for (uint8_t i = 0; i < gpio_cfg.gpio_cnt && i < GPIO_BOARD_MAX; i++)
+    for (uint8_t i = 0; i < GPIO_BOARD_MAX; i++)
     {
         if (gpio_cfg.gpios[i].state)
         {
-            ESP_LOGI(TAG, "Inicializando GPIO%d", gpio_cfg.gpios[i].gpio_num);
+            ESP_LOGI(TAG, "Inicializando GPIO%d", gpio_pins[gpio_cfg.gpios[i].gpio_num]);
             gpio_set_new_configure(&gpio_cfg.gpios[i]);
         }
     }

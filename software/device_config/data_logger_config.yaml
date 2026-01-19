@@ -1,3 +1,30 @@
+# ============================================================
+# CONFIGURAÇÃO DE GPIO – OPÇÕES VÁLIDAS
+#
+# Campos obrigatórios por GPIO:
+#   gpio:        Número físico do pino (ex: 1, 2, 33, 34, 35, 37, 38)
+#   state:       0 = desabilitado | 1 = habilitado
+#   mode:        DISABLE | INPUT | OUTPUT | INPUT_OUTPUT
+#   intr:        DISABLE | POSEDGE | NEGEDGE | ANYEDGE | LOW_LEVEL | HIGH_LEVEL
+#   pullup:      DISABLE | ENABLE
+#   pulldown:    DISABLE | ENABLE
+#
+# Exemplo:
+# gpio:
+#   - gpio: 33
+#     state: 1
+#     mode: INPUT
+#     intr: ANYEDGE
+#     pullup: ENABLE
+#     pulldown: DISABLE
+#
+# Observações:
+# - O número do GPIO é sempre o pino físico.
+# - A conversão para enum do firmware é feita automaticamente pelo script.
+# - Evite usar o mesmo GPIO como GPIO e UART ao mesmo tempo.
+# ============================================================
+
+
 gpio:
   - gpio: 34
     state: 0

@@ -2,6 +2,7 @@
 #include <string.h>
 #include "esp_wifi.h"
 #include "esp_err.h"
+#include "esp_wifi_default.h"
 #include "freertos/FreeRTOS.h"
 #include "esp_netif.h"
 #include "freertos/task.h"
@@ -10,14 +11,22 @@
 #include "esp_err.h"
 #include "esp_event.h"
 
+#include "driver/gpio.h"
+
 #include "wifi_conn.h"
 
 #include "esp_http_server.h"
 #include "app_config.h"
 
+#include "mqtt_app.h"
+
 #include "lwip/pbuf.h"
 #include "lwip/udp.h"
 #include "lwip/dns.h"
+
+#define BUTTON_DEBOUNCE_MS 200
+
+#define GPIO_SEL_CFG GPIO_NUM_41
 
 #pragma pack(push, 1)
 typedef struct 
@@ -37,6 +46,9 @@ typedef struct
 #define WIFI_FAIL_BIT      BIT1
 
 static const char *TAG = "WIFI_CONN";
+
+static bool wifi_init_done = false;
+static bool portal_running = false;
 
 static const char *html_page =
 "<!DOCTYPE html>"
@@ -164,9 +176,10 @@ static const char *html_page =
 "</body>"
 "</html>";
 
-
 static EventGroupHandle_t wifi_event_group;
 static int retry_num = 0;
+
+static TaskHandle_t config_task_handle = NULL;
 
 static struct udp_pcb *dns_pcb;
 
@@ -179,10 +192,112 @@ static const char *portal_uris[] =
     "/connecttest.txt",              // Windows
 };
 
-static esp_err_t root_get_handler(httpd_req_t *req)
+static esp_err_t captive_get_handler(httpd_req_t *req);
+static void wifi_conn_init_sta(wifi_config_t *cfg);
+static esp_err_t save_post_handler(httpd_req_t *req);
+static void wifi_event_handler(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data);
+static void http_server_start(void);
+static void dns_recv_cb(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr, u16_t port);
+static void wifi_dns_start(void);
+static void wifi_init_ap(void);
+static void url_decode_inplace(char *str);
+static void config_button_init(void);
+static void config_button_isr(void *arg);
+
+static void config_button_init(void)
 {
-    httpd_resp_send(req, html_page, HTTPD_RESP_USE_STRLEN);
-    return ESP_OK;
+    gpio_config_t btn_cfg = 
+    {
+        .pin_bit_mask = 1ULL << GPIO_SEL_CFG,
+        .mode = GPIO_MODE_INPUT,
+        .pull_up_en = GPIO_PULLUP_ENABLE,
+        .intr_type = GPIO_INTR_NEGEDGE, 
+    };
+
+    gpio_config(&btn_cfg);
+}
+
+static void IRAM_ATTR config_button_isr(void *arg)
+{
+    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+    xTaskNotifyFromISR(config_task_handle, 0x01, eSetBits, &xHigherPriorityTaskWoken);
+
+    if (xHigherPriorityTaskWoken)
+    {
+        portYIELD_FROM_ISR();
+    }
+}
+
+static void config_task(void *arg)
+{
+    static TickType_t last_button_tick = 0;
+
+    while (1) 
+    {
+        uint32_t notify;
+        xTaskNotifyWait(0, UINT32_MAX, &notify, portMAX_DELAY);
+
+        if (notify & 0x01) 
+        {
+
+            TickType_t now = xTaskGetTickCount();
+
+            if ((now - last_button_tick) < pdMS_TO_TICKS(300)) 
+            {
+                continue;
+            }
+
+            last_button_tick = now;
+
+            if (portal_running) 
+            {
+                ESP_LOGW(TAG, "Portal já ativo");
+                continue;
+            }
+
+            portal_running = true;
+
+            ESP_LOGI(TAG, "Botão válido, abrindo portal");
+            wifi_start_captive_portal();
+        }
+    }
+}
+
+static void url_decode_inplace(char *str) 
+{
+    char *src = str;
+    char *dst = str;
+    char a, b;
+
+    while (*src) 
+    {
+        if ((*src == '%') && ((a = src[1]) && (b = src[2])) && (isxdigit((int)a) && isxdigit((int)b))) 
+        {
+            if (a >= 'a') a -= 'a'-'A';
+            if (a >= 'A') a -= ('A' - 10);
+            else a -= '0';
+            
+            if (b >= 'a') b -= 'a'-'A';
+            if (b >= 'A') b -= ('A' - 10);
+            else b -= '0';
+            
+            *dst++ = 16 * a + b;
+            src += 3;
+        }
+
+        else if (*src == '+') 
+        {
+            *dst++ = ' ';
+            src++;
+        } 
+
+        else 
+        {
+            *dst++ = *src++;
+        }
+    }
+
+    *dst = '\0';
 }
 
 static esp_err_t captive_get_handler(httpd_req_t *req)
@@ -190,6 +305,50 @@ static esp_err_t captive_get_handler(httpd_req_t *req)
     httpd_resp_set_type(req, "text/html");
     httpd_resp_send(req, html_page, HTTPD_RESP_USE_STRLEN);
     return ESP_OK;
+}
+
+static void wifi_conn_init_sta(wifi_config_t *cfg)
+{
+    wifi_event_group  = xEventGroupCreate();
+
+    ESP_ERROR_CHECK(esp_netif_init());
+    ESP_ERROR_CHECK(esp_event_loop_create_default());
+    
+    esp_netif_create_default_wifi_sta();
+
+    esp_event_handler_instance_t instance_any_id;
+    esp_event_handler_instance_t instance_got_ip;
+
+    ESP_ERROR_CHECK(esp_event_handler_instance_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &wifi_event_handler, NULL, &instance_any_id));
+
+    ESP_ERROR_CHECK(esp_event_handler_instance_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &wifi_event_handler, NULL, &instance_got_ip));
+
+    ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
+    ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, cfg));
+    ESP_ERROR_CHECK(esp_wifi_start());
+
+    EventBits_t bits = xEventGroupWaitBits(wifi_event_group, WIFI_CONNECTED_BIT | WIFI_FAIL_BIT, pdFALSE, pdFALSE, portMAX_DELAY);
+
+    if (bits & WIFI_CONNECTED_BIT) 
+    {
+        ESP_LOGI(TAG, "Conectado à rede: %s", cfg->sta.ssid);
+        ESP_LOGI(TAG, "Senha inserida: %s", cfg->sta.password);
+        wifi_init_done = true;
+    }
+        
+    else if (bits & WIFI_FAIL_BIT) 
+    {
+        ESP_LOGW(TAG, "Falha ao conectar à rede: %s", cfg->sta.ssid);
+        ESP_LOGI(TAG, "Senha inserida: %s", cfg->sta.password);
+    }
+        
+    else 
+    {
+        ESP_LOGE(TAG, "Evento inesperado");
+    }
+        
+    ESP_ERROR_CHECK(esp_event_handler_instance_unregister(IP_EVENT, IP_EVENT_STA_GOT_IP, instance_got_ip));
+    ESP_ERROR_CHECK(esp_event_handler_instance_unregister(WIFI_EVENT, ESP_EVENT_ANY_ID, instance_any_id));
 }
 
 static esp_err_t save_post_handler(httpd_req_t *req)
@@ -208,6 +367,13 @@ static esp_err_t save_post_handler(httpd_req_t *req)
     httpd_query_key_value(buf, "ssid", netw_cfg.ssid, sizeof(netw_cfg.ssid));
     httpd_query_key_value(buf, "pass", netw_cfg.pass, sizeof(netw_cfg.pass));
     httpd_query_key_value(buf, "mqtt", netw_cfg.broker, sizeof(netw_cfg.broker));
+
+    url_decode_inplace(netw_cfg.ssid);
+    url_decode_inplace(netw_cfg.pass);
+    url_decode_inplace(netw_cfg.broker);
+
+    ESP_LOGI(TAG, "SSID Inserido: %s", netw_cfg.ssid);
+    ESP_LOGI(TAG, "PASS Inserido: %s", netw_cfg.pass);
 
     app_config_netw_save(&netw_cfg);
 
@@ -323,6 +489,17 @@ static void wifi_dns_start(void)
 
 static void wifi_init_ap(void)
 {
+    if(!wifi_init_done)
+    {
+        ESP_ERROR_CHECK(esp_netif_init());
+        ESP_ERROR_CHECK(esp_event_loop_create_default());
+        esp_netif_create_default_wifi_ap();
+    }
+    else
+    {   
+        esp_wifi_stop();
+    }
+
     wifi_config_t wifi_ap_cfg = 
     {
         .ap = 
@@ -334,7 +511,7 @@ static void wifi_init_ap(void)
             .authmode = WIFI_AUTH_OPEN,
         }
     };
-    esp_wifi_stop();
+
     esp_wifi_set_mode(WIFI_MODE_AP);
     esp_wifi_set_config(WIFI_IF_AP, &wifi_ap_cfg);
     esp_wifi_start();
@@ -343,6 +520,7 @@ static void wifi_init_ap(void)
 void wifi_start_captive_portal(void)
 {
     ESP_LOGI(TAG, "Iniciando captive portal");
+    mqtt_deinit_app();
 
     wifi_init_ap();
     wifi_dns_start();
@@ -353,31 +531,16 @@ void wifi_start_captive_portal(void)
 
 void wifi_conn_init(void)
 {
-    esp_netif_init();
-    esp_event_loop_create_default();
+    config_button_init();
+    xTaskCreate(config_task, "config_task", 4096, NULL, 10, &config_task_handle);
 
-    wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
+    gpio_install_isr_service(0);
+    gpio_isr_handler_add(GPIO_SEL_CFG, config_button_isr, NULL);
 
-    wifi_event_group = xEventGroupCreate();
+    ESP_LOGI(TAG, "Inicializando a Stack de wifi pessoal!");
 
-    ESP_ERROR_CHECK(esp_wifi_init(&cfg));
-
-    esp_netif_create_default_wifi_sta();
-    esp_netif_create_default_wifi_ap();
-
-    esp_event_handler_instance_t instance_any_id;
-    esp_event_handler_instance_t instance_got_ip;
-
-    ESP_ERROR_CHECK(esp_event_handler_instance_register(WIFI_EVENT,
-                                                        ESP_EVENT_ANY_ID,
-                                                        &wifi_event_handler,
-                                                        NULL,
-                                                        &instance_any_id));
-    ESP_ERROR_CHECK(esp_event_handler_instance_register(IP_EVENT,
-                                                        IP_EVENT_STA_GOT_IP,
-                                                        &wifi_event_handler,
-                                                        NULL,
-                                                        &instance_got_ip));
+    wifi_init_config_t cfg_init = WIFI_INIT_CONFIG_DEFAULT();
+    ESP_ERROR_CHECK(esp_wifi_init(&cfg_init));
 
     sys_config_netw_t netw_cfg = { 0 };                        
 
@@ -390,47 +553,11 @@ void wifi_conn_init(void)
 
     ESP_LOGI(TAG, "Tentando realizar conexão com a rede %s!", netw_cfg.ssid);
 
-    wifi_config_t wifi_cfg = 
-    {
-        .sta =
-        {
-            .pmf_cfg =
-            {
-                .capable = true,
-                .required = false,
-            },
-        },
-    };
-    
-    strncpy((char *)wifi_cfg.sta.ssid, netw_cfg.ssid, sizeof(wifi_cfg.sta.ssid) - 1);
-    strncpy((char *)wifi_cfg.sta.password, netw_cfg.pass, sizeof(wifi_cfg.sta.password) - 1);
+    wifi_config_t wifi_cfg = { 0 };
 
-    ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
-    ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &wifi_cfg));
-    ESP_ERROR_CHECK(esp_wifi_start());
+    memcpy(wifi_cfg.sta.ssid, netw_cfg.ssid, strlen(netw_cfg.ssid));
+    memcpy(wifi_cfg.sta.password, netw_cfg.pass, strlen(netw_cfg.ssid));
 
     ESP_LOGI(TAG, "Inicializando Wi-Fi STA...");
-
-    EventBits_t bits = xEventGroupWaitBits(wifi_event_group,
-                                           WIFI_CONNECTED_BIT | WIFI_FAIL_BIT,
-                                           pdFALSE,
-                                           pdFALSE,
-                                           portMAX_DELAY);
-
-    if (bits & WIFI_CONNECTED_BIT) 
-    {
-        ESP_LOGI(TAG, "Conectado à rede: %s", wifi_cfg.sta.ssid);
-        retry_num = 0;
-    }
-    else if (bits & WIFI_FAIL_BIT) 
-    {
-        ESP_LOGE(TAG, "Falha ao conectar à rede: %s", wifi_cfg.sta.ssid);
-        wifi_start_captive_portal();
-    }
-    else 
-        ESP_LOGE(TAG, "Evento inesperado");
-
-    ESP_ERROR_CHECK(esp_event_handler_instance_unregister(IP_EVENT, IP_EVENT_STA_GOT_IP, instance_got_ip));
-    ESP_ERROR_CHECK(esp_event_handler_instance_unregister(WIFI_EVENT, ESP_EVENT_ANY_ID, instance_any_id));
-    vEventGroupDelete(wifi_event_group);
+    wifi_conn_init_sta(&wifi_cfg);
 }

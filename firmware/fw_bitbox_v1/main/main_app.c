@@ -61,11 +61,6 @@ void app_main(void)
 {
     ESP_LOGI(TAG, "STARTING APP...");
     app_init_periph();
-    printf("--- DIAGNOSTICO DE MEMORIA ---\n");
-    printf("Total Livre: %lu bytes\n", esp_get_free_heap_size());
-    printf("Maior Bloco Livre: %u bytes\n", heap_caps_get_largest_free_block(MALLOC_CAP_8BIT));
-    printf("PSRAM Livre      : %d bytes (%d KB)\n", heap_caps_get_free_size(MALLOC_CAP_SPIRAM), heap_caps_get_free_size(MALLOC_CAP_SPIRAM)/1024);
-    printf("------------------------------\n");
 }
 
 bool main_app_get_uart_init_flag(void)

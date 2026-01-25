@@ -191,6 +191,12 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
     }
 }
 
+void mqtt_deinit_app(void)
+{
+    ESP_LOGI(TAG, "Cliente MQTT finializado!");
+    esp_mqtt_client_stop(mqtt_client);
+}
+
 void mqtt_main_app(void)
 {
     const esp_mqtt_client_config_t mqtt_cfg =

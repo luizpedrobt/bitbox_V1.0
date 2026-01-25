@@ -28,3 +28,5 @@ typedef struct topic_handler_s
 void mqtt_main_app(void);
 
 bool mqtt_publish_msg(const sd_log_msg_t *msg);
+
+void mqtt_deinit_app(void);

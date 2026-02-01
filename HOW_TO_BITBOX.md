@@ -165,10 +165,10 @@ Os logs são salvos em formato binário proprietário para máxima velocidade e 
     * `Edge` (1B): Borda detectada.
     * `Level` (1B): Nível lógico atual.
 
-    > **Chamada do script:** python process_log.py LOGXX.BIN -> Extrai os logs .bin e .txt de cada periférico na pasta padrão `decoded_logs/`.
-    > **Chamada do script:** python process_log.py LOG05.BIN --out analise_teste_campo -> Extrai os logs .bin e .txt de cada periférico na pasta .`analise_teste_campo`
-    > **Chamada do script:** python process_log.py LOG12.BIN --clean-> Extrai apenas .txt de cada periférico na pasta padrão `decoded_logs/`.
-    > **Chamada do script (Testado em Linux):** for f in *.BIN; do python process_log.py "$f" --clean; done -> extrai todos os logs do diretório atual.
+    > **Chamada do script:** python process_log.py LOGXX.BIN -> Extrai os logs .bin e .txt de cada periférico na pasta padrão `decoded_logs/`.\\
+    > **Chamada do script:** python process_log.py LOG05.BIN --out analise_teste_campo -> Extrai os logs .bin e .txt de cada periférico na pasta .`analise_teste_campo`\\
+    > **Chamada do script:** python process_log.py LOG12.BIN --clean-> Extrai apenas .txt de cada periférico na pasta padrão `decoded_logs/`.\\
+    > **Chamada do script (Testado em Linux):** for f in *.BIN; do python process_log.py "$f" --clean; done -> extrai todos os logs do diretório atual.\\
 ---
 
 ## 6. Ferramentas de Host (Python Scripts)

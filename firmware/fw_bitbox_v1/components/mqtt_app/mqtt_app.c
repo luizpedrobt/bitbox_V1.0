@@ -22,18 +22,12 @@
 #define MQTT_BROKER_URL "mqtts://qa717179.ala.us-east-1.emqxsl.com"
 #define MQTT_BROKER_PORT 8883
 
-static int embl_app_pins[PORT_MAX_LEDS] =
-{
-    GPIO_NUM_17, GPIO_NUM_18,
-};
-
 extern const uint8_t server_cert_start[] asm("_binary_emqxsl_ca_crt_start");
 extern const uint8_t server_cert_end[]   asm("_binary_emqxsl_ca_crt_end");
 
 extern const int gpio_pins[GPIO_BOARD_MAX];
 extern bool gpio_installeds[GPIO_BOARD_MAX];
 extern bool uart_installeds[UART_NUM_MAX];
-
 
 static esp_mqtt_client_handle_t mqtt_client = NULL;
 
@@ -396,8 +390,6 @@ bool mqtt_publish_msg(const sd_log_msg_t *msg)
 
             esp_mqtt_client_publish(mqtt_client, topic, (const char *)payload, payload_len, 0, 0);
 
-            embled_set_mode(embl_app_pins[PORT_STATUS], EMBLED_DRIVER_MODE_DIGITAL, EMBLED_MODE_PULSE_TRIPLE, EMBLED_ACTIVE_HIGH, false);
-
             return true;
         }
 
@@ -417,8 +409,6 @@ bool mqtt_publish_msg(const sd_log_msg_t *msg)
             payload_len = p - payload;
 
             esp_mqtt_client_publish(mqtt_client, topic,(const char *)payload,payload_len,1,0);
-
-            embled_set_mode(embl_app_pins[PORT_OPER], EMBLED_DRIVER_MODE_DIGITAL, EMBLED_MODE_PULSE_DOUBLE, EMBLED_ACTIVE_HIGH, false);
 
             return true;
         }

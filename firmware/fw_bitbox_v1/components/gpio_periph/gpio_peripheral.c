@@ -60,7 +60,7 @@ void gpio_set_new_configure(gpio_cfg_t *cfg)
     static bool record_task_created = false;
     if (!record_task_created)
     {
-        xTaskCreate(gpio_log_task, "gpio_log_task", 4095, NULL, 5, NULL);
+        xTaskCreate(gpio_log_task, "gpio_log_task", 8191, NULL, 5, NULL);
         record_task_created = true;
     }
 }

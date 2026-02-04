@@ -35,7 +35,6 @@ typedef struct sys_config_netw_s
 {
     char ssid[32];
     char pass[64];
-    char broker[124];
 } sys_config_netw_t;
 
 #define X(IDX, PERIPH_CFG, ST_PERIPH, CFG_VAR, NAMESPACE, FUNC_PROT) esp_err_t FUNC_PROT##_save(const ST_PERIPH *CFG_VAR);

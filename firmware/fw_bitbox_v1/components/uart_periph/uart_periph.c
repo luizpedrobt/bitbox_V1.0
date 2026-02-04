@@ -281,7 +281,7 @@ static void uart_apply_config(const uart_cfg_t *cfg)
     has_pending_data[cfg->uart_num] = false;
     last_rx_time[cfg->uart_num] = esp_timer_get_time();
 
-    xTaskCreate(uart_periph_driver_task, "uart_rx_task",4000, (void *)cfg->uart_num, 5, &uart_task_handlers[cfg->uart_num]);
+    xTaskCreate(uart_periph_driver_task, "uart_rx_task",8191, (void *)cfg->uart_num, 5, &uart_task_handlers[cfg->uart_num]);
 
     ESP_LOGI(TAG, "UART%d instalada! Tx: GPIO%d | Rx: GPIO%d a %dbps", cfg->uart_num, cfg->tx_pin, cfg->rx_pin, cfg->baudrate);
     uart_installeds[cfg->uart_num] = true;

@@ -16,6 +16,7 @@
 
 #include "wifi_conn.h"
 #include "esp_timer.h"
+#include "embled_app.h"
 
 #include "esp_http_server.h"
 #include "app_config.h"
@@ -57,6 +58,11 @@ typedef struct
 
 static esp_timer_handle_t portal_timer = NULL;
 
+static const int embl_app_pins[PORT_MAX_LEDS] =
+{
+    GPIO_NUM_17, GPIO_NUM_18,
+};
+
 static const char *TAG = "WIFI_CONN";
 
 static bool wifi_init_done = false;
@@ -76,18 +82,24 @@ static const char *html_gpio_page =
 "<meta name='viewport' content='width=device-width, initial-scale=1.0'>"
 "<title>Hardware Config</title>"
 "<style>"
-":root { --bg: #0f172a; --card: #1e293b; --text: #f1f5f9; --primary: #10b981; --border: #334155; --disabled: #475569; }"
-"body { font-family: sans-serif; background: var(--bg); color: var(--text); padding: 20px; display:flex; justify-content:center; }"
-".card { background: var(--card); border-radius: 12px; padding: 20px; width: 100%; max-width: 550px; border: 1px solid var(--border); }"
-"h2 { text-align: center; border-bottom: 1px solid var(--border); padding-bottom: 10px; margin-top:0; }"
-".row { display: flex; gap: 8px; margin-bottom: 10px; align-items: center; padding: 8px; border-radius: 6px; background: #0f172a; transition: opacity 0.3s; }"
-".row.disabled { opacity: 0.4; pointer-events: none; }"
-"label { min-width: 80px; font-weight: bold; font-size: 0.8rem; color: #cbd5f5; }"
-"select, input { flex: 1; padding: 8px; background: #1e293b; color: white; border: 1px solid var(--border); border-radius: 4px; font-size: 0.9rem; }"
-"button { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 20px; }"
-".sec-title { margin: 24px 0 10px 0; color: var(--primary); font-size: 0.95rem; text-transform: uppercase; letter-spacing: 1px; font-weight:bold; border-bottom: 1px solid #334155; padding-bottom: 5px; }"
-"input[type='checkbox'] { width: 20px; height: 20px; flex: 0 0 20px; cursor: pointer; accent-color: var(--primary); }"
-".help-text { font-size: 0.75rem; color: #94a3b8; margin-bottom: 10px; display: block; }"
+":root { --bg: #0f172a; --card: #1e293b; --text: #f1f5f9; --primary: #10b981; --border: #334155; }"
+"body { font-family: sans-serif; background: var(--bg); color: var(--text); padding: 10px; display:flex; justify-content:center; }"
+".card { background: var(--card); border-radius: 12px; padding: 15px; width: 100%; max-width: 500px; border: 1px solid var(--border); box-sizing: border-box; }"
+"h2 { text-align: center; border-bottom: 1px solid var(--border); padding-bottom: 10px; margin-top:0; font-size: 1.2rem; }"
+/* Estilos Gerais de Linha */
+".row { background: #0f172a; border-radius: 6px; padding: 8px; margin-bottom: 8px; border: 1px solid #334155; }"
+".row.disabled { opacity: 0.3; pointer-events: none; }"
+/* Layout Flex */
+".flex-line { display: flex; gap: 5px; align-items: center; margin-bottom: 4px; }"
+".flex-line:last-child { margin-bottom: 0; }"
+/* Labels e Inputs */
+"label { font-size: 0.7rem; color: #cbd5f5; font-weight: bold; margin-right: 4px; }"
+"select, input { flex: 1; padding: 6px; background: #1e293b; color: white; border: 1px solid var(--border); border-radius: 4px; font-size: 0.8rem; min-width: 0; }"
+"button { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 15px; }"
+".sec-title { margin: 20px 0 8px 0; color: var(--primary); font-size: 0.9rem; text-transform: uppercase; font-weight:bold; border-bottom: 1px solid #334155; }"
+"input[type='checkbox'] { width: 18px; height: 18px; flex: 0 0 18px; cursor: pointer; accent-color: var(--primary); }"
+".grp { display: flex; flex-direction: column; flex: 1; }" /* Agrupa Label + Input verticalmente */
+".grp-l { margin-bottom: 2px; }"
 "</style>"
 "</head>"
 "<body>"
@@ -95,12 +107,10 @@ static const char *html_gpio_page =
 "<h2>Hardware Config</h2>"
 "<form method='POST' action='/save_gpio'>"
 
-"<div class='sec-title'>UART Configuration (0-2)</div>"
-"<span class='help-text'>Escolha qualquer GPIO livre para TX/RX.</span>"
+"<div class='sec-title'>UART Configuration</div>"
 "<div id='u_cont'></div>"
 
 "<div class='sec-title'>GPIO Configuration</div>"
-"<span class='help-text'>Configuração dos pinos mapeados na placa.</span>"
 "<div id='g_cont'></div>"
 
 "<button type='submit'>Salvar Configuração</button>"
@@ -115,28 +125,41 @@ static const char *html_gpio_page =
 "  else row.classList.add('disabled');"
 "}"
 
+/* GERAÇÃO UART */
 "const u_cont = document.getElementById('u_cont');"
 "for(let i=0; i<3; i++) {"
-"  let h = `<div style='display:flex; align-items:center; margin-bottom:5px;'>`;"
+"  let h = `<div style='display:flex; align-items:center; margin-bottom:2px; margin-top:8px;'>`;"
 "  h += `<input type='checkbox' name='u_en_${i}' id='u_en_${i}' onchange='toggle(${i}, \"u\")'>`;"
-"  h += `<label style='margin-left:8px; color:white;'>Enable UART ${i}</label></div>`;"
+"  h += `<label style='margin-left:8px; color:white; font-size:0.9rem;'>UART ${i}</label></div>`;"
 "  h += `<div class='row disabled' id='u_row_${i}'>`;"
-"  h += `<label>Baud</label><input type='number' name='u_baud_${i}' value='115200'>`;"
-"  h += `<label>TX Pin</label><input type='number' name='u_tx_${i}' min='0' max='48' placeholder='GPIO'>`;"
-"  h += `<label>RX Pin</label><input type='number' name='u_rx_${i}' min='0' max='48' placeholder='GPIO'></div>`;"
+"  h += `<div class='flex-line'>`;"
+"  h += `<div class='grp' style='flex:0.6'><span class='grp-l label'>Baud</span><input type='number' name='u_baud_${i}' value='115200'></div>`;"
+"  h += `<div class='grp'><span class='grp-l label'>TX Pin</span><input type='number' name='u_tx_${i}' placeholder='IO'></div>`;"
+"  h += `<div class='grp'><span class='grp-l label'>RX Pin</span><input type='number' name='u_rx_${i}' placeholder='IO'></div>`;"
+"  h += `</div></div>`;"
 "  u_cont.innerHTML += h;"
 "}"
 
+/* GERAÇÃO GPIO */
 "const p = ['BOARD_1','BOARD_2','BOARD_3','BOARD_4','BOARD_5','BOARD_33','BOARD_34','BOARD_35','BOARD_36','BOARD_37'];"
 "const g_cont = document.getElementById('g_cont');"
 "p.forEach((n, i) => {"
-"  let h = `<div style='display:flex; align-items:center; margin-bottom:5px;'>`;"
+"  let h = `<div style='display:flex; align-items:center; margin-bottom:2px; margin-top:10px;'>`;"
 "  h += `<input type='checkbox' name='g_en_${i}' id='g_en_${i}' onchange='toggle(${i}, \"g\")'>`;"
-"  h += `<label style='margin-left:8px; color:white;'>Enable ${n}</label></div>`;"
+"  h += `<label style='margin-left:8px; color:white; font-size:0.9rem;'>${n}</label></div>`;"
 "  h += `<div class='row disabled' id='g_row_${i}'>`;"
-"  h += `<select name='m_${i}'><option value='0'>IN</option><option value='1'>OUT</option></select>`;"
-"  h += `<select name='p_${i}'><option value='0'>None</option><option value='1'>Up</option><option value='2'>Down</option></select>`;"
-"  h += `<select name='s_${i}'><option value='0'>LOW</option><option value='1'>HIGH</option></select></div>`;"
+   /* Linha 1: Mode e Interrupt */
+"  h += `<div class='flex-line'>`;"
+"  h += `<div class='grp'><span class='grp-l label'>Mode</span><select name='m_${i}'>`;"
+"  h += `<option value='0'>DISABLE</option><option value='1'>INPUT</option><option value='2'>OUTPUT</option><option value='3'>IN_OUT</option></select></div>`;"
+"  h += `<div class='grp'><span class='grp-l label'>Intr</span><select name='int_${i}'>`;"
+"  h += `<option value='0'>DISABLE</option><option value='1'>POSEDGE</option><option value='2'>NEGEDGE</option><option value='3'>ANYEDGE</option><option value='4'>LOW</option><option value='5'>HIGH</option></select></div>`;"
+"  h += `</div>`;"
+   /* Linha 2: Pull Up e Pull Down */
+"  h += `<div class='flex-line'>`;"
+"  h += `<div class='grp'><span class='grp-l label'>Pull Up</span><select name='pu_${i}'><option value='0'>DISABLE</option><option value='1'>ENABLE</option></select></div>`;"
+"  h += `<div class='grp'><span class='grp-l label'>Pull Down</span><select name='pd_${i}'><option value='0'>DISABLE</option><option value='1'>ENABLE</option></select></div>`;"
+"  h += `</div></div>`;"
 "  g_cont.innerHTML += h;"
 "});"
 "</script>"
@@ -176,8 +199,6 @@ static const char *html_page =
 "<button type='button' onclick='loadNetworks()' style='margin-bottom:14px; background:#1e293b; font-size:0.8rem; padding:8px;'>↻ Atualizar Lista</button>"
 "<label>Senha</label>"
 "<input name='pass' type='password' placeholder='Senha do Wi-Fi'>"
-"<label>MQTT Broker</label>"
-"<input name='mqtt' placeholder='ex: mqtt://192.168.1.10' required>"
 "<button type='submit'>Salvar Configuração</button>"
 "</form>"
 "<div class='footer'>Firmware Config Portal</div>"
@@ -408,7 +429,6 @@ static esp_err_t captive_get_handler(httpd_req_t *req)
 
 static esp_err_t save_gpio_handler(httpd_req_t *req)
 {
-
     char buf[4096]; 
     int ret, remaining = req->content_len;
 
@@ -420,117 +440,110 @@ static esp_err_t save_gpio_handler(httpd_req_t *req)
     }
 
     ret = httpd_req_recv(req, buf, remaining);
-    if (ret <= 0) 
-    {
-        return ESP_FAIL;
-    }
-
+    if (ret <= 0) return ESP_FAIL;
     buf[ret] = '\0';
 
     sys_config_uart_t sys_uart = {0};
     sys_config_gpio_t sys_gpio = {0};
     char val[16];
     char key[32];
-
-    sys_uart.uart_cnt = UART_NUM_MAX; 
-
+    
+    // --- UART ---
+    int active_uart_count = 0;
     for(int i = 0; i < UART_NUM_MAX; i++)
     {
-        sys_uart.uarts[i].uart_num = i;
-        
         snprintf(key, sizeof(key), "u_en_%d", i);
         if (httpd_query_key_value(buf, key, val, sizeof(val)) == ESP_OK) 
         {
-            sys_uart.uarts[i].state = true; 
-        }
-        else
-        {
-            sys_uart.uarts[i].state = false; 
-        }
-
-        if(sys_uart.uarts[i].state)
-        {
+            sys_uart.uarts[active_uart_count].uart_num = i;
+            sys_uart.uarts[active_uart_count].state = true; 
+            
             snprintf(key, sizeof(key), "u_baud_%d", i);
-            if (httpd_query_key_value(buf, key, val, sizeof(val)) == ESP_OK)
-            { 
-                sys_uart.uarts[i].baudrate = atoi(val);
-            }
+            if (httpd_query_key_value(buf, key, val, sizeof(val)) == ESP_OK) 
+                sys_uart.uarts[active_uart_count].baudrate = atoi(val);
 
             snprintf(key, sizeof(key), "u_tx_%d", i);
             if (httpd_query_key_value(buf, key, val, sizeof(val)) == ESP_OK) 
-            {
-                sys_uart.uarts[i].tx_pin = atoi(val);
-            }
+                sys_uart.uarts[active_uart_count].tx_pin = atoi(val);
 
             snprintf(key, sizeof(key), "u_rx_%d", i);
             if (httpd_query_key_value(buf, key, val, sizeof(val)) == ESP_OK) 
-            {
-                sys_uart.uarts[i].rx_pin = atoi(val);
-            }
-        }
+                sys_uart.uarts[active_uart_count].rx_pin = atoi(val);
 
-        else
-        {
-            sys_uart.uarts[i].baudrate = 0;
-            sys_uart.uarts[i].tx_pin = -1;
-            sys_uart.uarts[i].rx_pin = -1;
+            active_uart_count++;
         }
     }
+    sys_uart.uart_cnt = active_uart_count;
 
-    sys_gpio.gpio_cnt = GPIO_BOARD_MAX; 
+    int active_gpio_count = 0;
 
     for (int i = 0; i < GPIO_BOARD_MAX; i++) 
     {
-        sys_gpio.gpios[i].gpio_num = (gpio_available_ports_t)i; 
-
         snprintf(key, sizeof(key), "g_en_%d", i);
-        bool enabled = (httpd_query_key_value(buf, key, val, sizeof(val)) == ESP_OK);
-
-        if (enabled) 
+        
+        if (httpd_query_key_value(buf, key, val, sizeof(val)) == ESP_OK) 
         {
+            sys_gpio.gpios[active_gpio_count].gpio_num = (gpio_available_ports_t)i; 
+            sys_gpio.gpios[active_gpio_count].state = true;
+
             snprintf(key, sizeof(key), "m_%d", i);
             if (httpd_query_key_value(buf, key, val, sizeof(val)) == ESP_OK) 
             {
-                sys_gpio.gpios[i].mode = (atoi(val) == 1) ? GPIO_MODE_OUTPUT : GPIO_MODE_INPUT;
+                int m = atoi(val);
+                switch(m) {
+                    case 1: sys_gpio.gpios[active_gpio_count].mode = GPIO_MODE_INPUT; break;
+                    case 2: sys_gpio.gpios[active_gpio_count].mode = GPIO_MODE_OUTPUT; break;
+                    case 3: sys_gpio.gpios[active_gpio_count].mode = GPIO_MODE_INPUT_OUTPUT; break;
+                    default: sys_gpio.gpios[active_gpio_count].mode = GPIO_MODE_DISABLE; break;
+                }
             }
 
-            snprintf(key, sizeof(key), "p_%d", i);
-            if (httpd_query_key_value(buf, key, val, sizeof(val)) == ESP_OK) 
+            snprintf(key, sizeof(key), "int_%d", i);
+            if (httpd_query_key_value(buf, key, val, sizeof(val)) == ESP_OK)
             {
-                int p = atoi(val);
-                sys_gpio.gpios[i].pull_up_en = (p == 1) ? GPIO_PULLUP_ENABLE : GPIO_PULLUP_DISABLE;
-                sys_gpio.gpios[i].pull_down_en = (p == 2) ? GPIO_PULLDOWN_ENABLE : GPIO_PULLDOWN_DISABLE;
+                int intr = atoi(val);
+                switch(intr) {
+                    case 1: sys_gpio.gpios[active_gpio_count].intr_type = GPIO_INTR_POSEDGE; break;
+                    case 2: sys_gpio.gpios[active_gpio_count].intr_type = GPIO_INTR_NEGEDGE; break;
+                    case 3: sys_gpio.gpios[active_gpio_count].intr_type = GPIO_INTR_ANYEDGE; break;
+                    case 4: sys_gpio.gpios[active_gpio_count].intr_type = GPIO_INTR_LOW_LEVEL; break;
+                    case 5: sys_gpio.gpios[active_gpio_count].intr_type = GPIO_INTR_HIGH_LEVEL; break;
+                    default: sys_gpio.gpios[active_gpio_count].intr_type = GPIO_INTR_DISABLE; break;
+                }
             }
 
-            snprintf(key, sizeof(key), "s_%d", i);
-            if (httpd_query_key_value(buf, key, val, sizeof(val)) == ESP_OK) 
+            // Pull Up: 0=DIS, 1=EN
+            snprintf(key, sizeof(key), "pu_%d", i);
+            if (httpd_query_key_value(buf, key, val, sizeof(val)) == ESP_OK)
             {
-                sys_gpio.gpios[i].state = (atoi(val) == 1);
+                sys_gpio.gpios[active_gpio_count].pull_up_en = (atoi(val) == 1) ? GPIO_PULLUP_ENABLE : GPIO_PULLUP_DISABLE;
             }
-        }
 
-        else
-        {
-            sys_gpio.gpios[i].mode = GPIO_MODE_DISABLE;
-            sys_gpio.gpios[i].pull_up_en = GPIO_PULLUP_DISABLE;
-            sys_gpio.gpios[i].pull_down_en = GPIO_PULLDOWN_DISABLE;
-            sys_gpio.gpios[i].state = 0;
+            // Pull Down: 0=DIS, 1=EN
+            snprintf(key, sizeof(key), "pd_%d", i);
+            if (httpd_query_key_value(buf, key, val, sizeof(val)) == ESP_OK)
+            {
+                sys_gpio.gpios[active_gpio_count].pull_down_en = (atoi(val) == 1) ? GPIO_PULLDOWN_ENABLE : GPIO_PULLDOWN_DISABLE;
+            }
+
+            active_gpio_count++;
         }
     }
+    
+    sys_gpio.gpio_cnt = active_gpio_count;
 
     esp_err_t err_u = app_config_uart_save(&sys_uart);
     esp_err_t err_g = app_config_gpio_save(&sys_gpio);
 
     if (err_u == ESP_OK && err_g == ESP_OK) 
     {
-        ESP_LOGI(TAG, "Hardware config salva com sucesso.");
+        ESP_LOGI(TAG, "Config salva: %d UARTs, %d GPIOs.", active_uart_count, active_gpio_count);
         httpd_resp_sendstr(req, "Configuração salva. Reiniciando...");
         vTaskDelay(pdMS_TO_TICKS(1000));
         esp_restart();
     }
     else 
     {
-        ESP_LOGE(TAG, "Falha ao salvar hardware config.");
         httpd_resp_send_500(req);
         return ESP_FAIL;
     }
@@ -614,12 +627,6 @@ static bool wifi_conn_init_sta(wifi_config_t *cfg)
         ESP_LOGW(TAG, "Falha ao conectar à rede: %s", cfg->sta.ssid);
         result = false;
     }
-        
-    if(wifi_event_group != NULL)
-    {
-        vEventGroupDelete(wifi_event_group);
-        wifi_event_group = NULL;
-    }
 
     return result;
 }
@@ -639,11 +646,9 @@ static esp_err_t save_post_handler(httpd_req_t *req)
 
     httpd_query_key_value(buf, "ssid", netw_cfg.ssid, sizeof(netw_cfg.ssid));
     httpd_query_key_value(buf, "pass", netw_cfg.pass, sizeof(netw_cfg.pass));
-    httpd_query_key_value(buf, "mqtt", netw_cfg.broker, sizeof(netw_cfg.broker));
 
     url_decode_inplace(netw_cfg.ssid);
     url_decode_inplace(netw_cfg.pass);
-    url_decode_inplace(netw_cfg.broker);
 
     app_config_netw_save(&netw_cfg);
 
@@ -668,21 +673,32 @@ static void wifi_event_handler(void *arg, esp_event_base_t event_base, int32_t e
         
     else if(event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED)
     {
-        if(retry_num < WIFI_MAX_RETRYS)
+        if(retry_num <= WIFI_MAX_RETRYS)
         {
             esp_wifi_connect();
+            embled_set_mode(embl_app_pins[PORT_STATUS], EMBLED_DRIVER_MODE_DIGITAL, EMBLED_MODE_BLINK_SLOW, EMBLED_ACTIVE_HIGH, false);
             retry_num++;
             ESP_LOGI(TAG, "Tentando se conectar no WiFi");
+        }
+
+        else if(retry_num > WIFI_MAX_RETRYS)
+        {
+            ESP_LOGW(TAG, "Falha na Conexão Wi-Fi: Máximo de tentativas atingido");
         }
 
         else
         {
             if(wifi_event_group != NULL)
             {
-                xEventGroupSetBits(wifi_event_group, WIFI_FAIL_BIT);
-            }
+                wifi_event_sta_disconnected_t *disc_event = (wifi_event_sta_disconnected_t *) event_data;
 
-            ESP_LOGW(TAG, "Falha na Conexão Wi-Fi: Máximo de tentativas atingido");
+                ESP_LOGW(TAG, "Wi-Fi Desconectado. Reason Code: %d", disc_event->reason);
+
+                xEventGroupSetBits(wifi_event_group, WIFI_FAIL_BIT);
+
+                embled_set_mode(embl_app_pins[PORT_STATUS], EMBLED_DRIVER_MODE_DIGITAL, EMBLED_MODE_BLINK_SLOW, EMBLED_ACTIVE_HIGH, false);
+                mqtt_deinit_app();
+            }
         }
     }
     
@@ -690,6 +706,7 @@ static void wifi_event_handler(void *arg, esp_event_base_t event_base, int32_t e
     {
         ip_event_got_ip_t *event = (ip_event_got_ip_t *)event_data;
         ESP_LOGI(TAG, "Conectado com IP: "IPSTR, IP2STR(&event->ip_info.ip));
+        embled_set_mode(embl_app_pins[PORT_STATUS], EMBLED_DRIVER_MODE_DIGITAL, EMBLED_MODE_ON, EMBLED_ACTIVE_HIGH, false);
         retry_num = 0;
 
         if(wifi_event_group != NULL)

@@ -55,6 +55,7 @@ static void app_init_periph(void)
 //     ESP_LOGI(TAG, "Gerenciamente de energia ativado!");
 // #endif
 
+    embled_app_main();
     sdmmc_initialized = sdmmc_stor_init();
     uart_periph_initialized = uart_periph_driver_init();
     gpio_periph_main();
@@ -70,13 +71,11 @@ static void app_init_periph(void)
     {
         ESP_LOGI(TAG, "Rede conectada! Partindo para o funcionamento online e offline!");
         mqtt_main_app();
-        embled_app_main();
     }
 
     else
     {
         ESP_LOGI(TAG, "Falha ao conectar na rede! Partindo para o funcionamento offline!");
-        embled_app_main(); 
     }
 }
 

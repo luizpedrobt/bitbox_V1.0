@@ -19,17 +19,17 @@
 #include "uart_periph.h"
 #include "app_config.h"
 
-#define GPIO_EVT_QUEUE_LEN 64
+#define GPIO_EVT_QUEUE_LEN 32
 
 #define GPIO_DEBOUNCE_US 50000  
 
-static uint64_t last_evt_time[GPIO_BOARD_MAX] = {0};
+static volatile uint64_t last_evt_time[GPIO_BOARD_MAX] = {0};
 static uint8_t  last_level[GPIO_BOARD_MAX]   = {0xFF};
 
 static QueueHandle_t gpio_evt_queue;
 
 bool gpio_installeds[GPIO_BOARD_MAX] = { false, false, false, false, false, false, false, false, false, false };
-static const int gpio_pins[GPIO_BOARD_MAX] = { 1 , 2, 3, 4, 5, 33, 34, 35, 37, 38 };
+static const int gpio_pins[GPIO_BOARD_MAX] = { 1 , 2, 3, 4, 5, 33, 34, 35, 36, 37 };
 
 static const char *TAG = "GPIO_PERIPH";
 
@@ -54,19 +54,25 @@ static void gpio_log_task(void *args);
 
 void gpio_set_new_configure(gpio_cfg_t *cfg)
 {
+    if (gpio_evt_queue == NULL) 
+    {
+        gpio_periph_main();
+    }
+
     gpio_config_save_update(cfg);
     gpio_apply_config(cfg);
 
     static bool record_task_created = false;
     if (!record_task_created)
     {
-        xTaskCreate(gpio_log_task, "gpio_log_task", 8191, NULL, 5, NULL);
+        xTaskCreate(gpio_log_task, "gpio_log_task", 8192, NULL, 5, NULL);
         record_task_created = true;
     }
 }
 
 void gpio_periph_main(void)
 {
+    esp_log_level_set(TAG, ESP_LOG_INFO);
     gpio_evt_queue = xQueueCreate( GPIO_EVT_QUEUE_LEN, sizeof(gpio_evt_t));
 }
 
@@ -143,15 +149,38 @@ static void gpio_config_save_update(const gpio_cfg_t *cfg)
 static void IRAM_ATTR gpio_isr_handler(void *args)
 {
     uint32_t gpio_idx = (uint32_t)args; 
+    
+    if (gpio_idx >= GPIO_BOARD_MAX) 
+    {
+        return;
+    }
+
+    int64_t now = esp_timer_get_time();
+
+    if ((now - last_evt_time[gpio_idx]) < GPIO_DEBOUNCE_US)
+    {
+        return; 
+    }
+
+    last_evt_time[gpio_idx] = now;
 
     int gpio_num = gpio_pins[gpio_idx];
 
     gpio_evt_t evt; 
-    evt.gpio = gpio_idx; 
+    evt.gpio = (uint8_t)gpio_idx; 
     evt.level = gpio_get_level(gpio_num); 
-    evt.time_us = esp_timer_get_time();
+    evt.time_us = now;
 
-    xQueueSendFromISR(gpio_evt_queue, &evt, NULL);
+    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+    if (gpio_evt_queue != NULL)
+    {
+        xQueueSendFromISR(gpio_evt_queue, &evt, &xHigherPriorityTaskWoken);
+    }
+
+    if (xHigherPriorityTaskWoken)
+    {
+        portYIELD_FROM_ISR();
+    }
 }
 
 static void gpio_log_task(void *args)
@@ -163,34 +192,15 @@ static void gpio_log_task(void *args)
         if (xQueueReceive(gpio_evt_queue, &evt, portMAX_DELAY))
         {
             uint8_t gpio_logic = evt.gpio; // índice lógico do gpio
-            uint64_t now  = evt.time_us;
-
-            if (gpio_logic >= GPIO_BOARD_MAX) 
-            {
-                continue;
-            }
-
-            if ((now - last_evt_time[gpio_logic]) < GPIO_DEBOUNCE_US) 
-            {
-                continue;  
-            }
-
-            if (last_level[gpio_logic] == evt.level) 
-            {
-                continue;
-            }
-
-            last_evt_time[gpio_logic] = now;
-            last_level[gpio_logic]    = evt.level;
 
             int real_pin = gpio_pins[gpio_logic];
 
-            ESP_LOGI(TAG, "GPIO%d | level=%d | t=%lld us", real_pin, evt.level, now);
+            ESP_LOGI(TAG, "GPIO%d | level=%d | t=%lld us", real_pin, evt.level, evt.time_us);
 
             sd_log_msg_t gpio_msg = {0};
 
             gpio_msg.log_header.header = LOG_PACKET_HEADER_INIT;
-            gpio_msg.log_header.time_us = now;
+            gpio_msg.log_header.time_us = evt.time_us;
             gpio_msg.log_header.log_type = SD_LOG_GPIO;
             gpio_msg.log_header.periph_num = real_pin;
 

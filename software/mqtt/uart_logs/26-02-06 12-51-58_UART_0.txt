@@ -1,0 +1,42 @@
+[2026-02-06 12:51:58.578] .<......ativo frequencia falha.
+[2026-02-06 12:52:03.604] ........ativo warning uart corrente.
+[2026-02-06 12:52:08.571] ..$.....recebido ativo pressao.
+[2026-02-06 12:52:13.639] .&q.....falha telemetria ativo.
+[2026-02-06 12:52:18.625] %t......controle warning operando.
+[2026-02-06 12:52:23.674] ........sensor tensao corrente.
+[2026-02-06 12:52:28.590] b.V.....bateria sensor tensao.
+[2026-02-06 12:52:33.607] .\......erro motor estado pressao.
+[2026-02-06 12:52:38.625] ........erro motor corrente.
+[2026-02-06 12:52:43.642] K.:.....falha gpio tensao erro.
+[2026-02-06 12:52:48.637] .D......pressao sistema falha.
+[2026-02-06 12:52:53.576] k.......frequencia enviado pacote.
+[2026-02-06 12:52:58.592] ........frequencia inicializado.
+[2026-02-06 12:53:03.610] .-l.....corrente inicializado.
+[2026-02-06 12:53:08.582] 9|......pacote pressao sensor.
+[2026-02-06 12:53:13.646] ........pacote estado estado.
+[2026-02-06 12:53:18.574] j.Q.....operando enviado falha.
+[2026-02-06 12:53:23.587] .e......enviado recebido controle.
+[2026-02-06 12:53:28.596] 5.......ativo sistema pressao.
+[2026-02-06 12:53:33.614] ..5.....warning sensor enviado.
+[2026-02-06 12:53:38.631] .N......pacote sistema inicializado.
+[2026-02-06 12:53:43.649] ........controle telemetria.
+[2026-02-06 12:53:48.576] ........temperatura pressao.
+[2026-02-06 12:53:53.684] .6g.....sistema tensao pacote.
+[2026-02-06 12:53:58.804] ........gpio inicializado motor.
+[2026-02-06 12:54:03.617] ........estado ok estado warning.
+[2026-02-06 12:54:08.624] I.L.....corrente frequencia.
+[2026-02-06 12:54:13.652] .l......ativo ativo warning.
+[2026-02-06 12:54:18.669] ........frequencia sistema pressao.
+[2026-02-06 12:54:23.687] ..1.....pacote falha recebido.
+[2026-02-06 12:54:28.602] .V}.....corrente ativo tensao.
+[2026-02-06 12:54:33.722] ........uart bateria motor ativo.
+[2026-02-06 12:54:38.582] ........enviado corrente pressao.
+[2026-02-06 12:54:43.655] .@b.....controle estado ok warning.
+[2026-02-06 12:54:48.672] Q.......pacote gpio pressao.
+[2026-02-06 12:54:53.588] G.......bateria ativo sensor.
+[2026-02-06 12:54:58.605] F*G.....sensor ativo uart pressao.
+[2026-02-06 12:55:03.623] >x......bateria frequencia pressao.
+[2026-02-06 12:55:08.631] ........ok enviado sensor estado.
+[2026-02-06 12:55:13.658] ..,.....pacote enviado telemetria.
+[2026-02-06 12:55:18.676] ._x.....ok ativo pacote sistema.
+[2026-02-06 12:55:23.591] ........gpio inicializado frequencia.

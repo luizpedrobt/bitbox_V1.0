@@ -1,0 +1,617 @@
+[2026-02-06 13:06:47.113] YW......falha recebido gpio.
+[2026-02-06 13:06:52.131] ........falha temperatura estado.
+[2026-02-06 13:06:57.148] a.2.....uart warning operando.
+[2026-02-06 13:07:02.165] .@......sistema corrente ativo.
+[2026-02-06 13:07:07.183] }.......tensao falha corrente.
+[2026-02-06 13:07:12.303] b.......recebido inicializado.
+[2026-02-06 13:07:17.116] h*d.....telemetria estado telemetria.
+[2026-02-06 13:07:22.134] .v......gpio telemetria estado.
+[2026-02-06 13:07:27.151] F.......estado tensao bateria.
+[2026-02-06 13:07:32.169] ..I.....bateria bateria telemetria.
+[2026-02-06 13:07:37.187] ,`......telemetria motor estado.
+[2026-02-06 13:07:42.102] v.......telemetria enviado warning.
+[2026-02-06 13:07:47.119] >.-.....sensor uart operando.
+[2026-02-06 13:07:52.094] [Iz.....sistema uart operando.
+[2026-02-06 13:07:57.154] J.......recebido corrente controle.
+[2026-02-06 13:08:02.172] ........estado frequencia pressao.
+[2026-02-06 13:08:07.190] .2_.....warning erro warning.
+[2026-02-06 13:08:12.092] ........frequencia motor tensao.
+[2026-02-06 13:08:17.122] ........sensor sensor enviado.
+[2026-02-06 13:08:22.140] ..D.....controle pressao uart.
+[2026-02-06 13:08:27.099] ~h......gpio bateria tensao.
+[2026-02-06 13:08:32.176] ........frequencia tensao recebido.
+[2026-02-06 13:08:37.193] ..).....motor temperatura corrente.
+[2026-02-06 13:08:42.094] .Ru.....ativo telemetria inicializado.
+[2026-02-06 13:08:47.126] ........sistema pressao sensor.
+[2026-02-06 13:08:52.143] r.......sistema sensor sensor.
+[2026-02-06 13:08:57.161] .;Z.....erro ativo sistema telemetria.
+[2026-02-06 13:09:02.088] ........temperatura telemetria.
+[2026-02-06 13:09:07.196] ........corrente bateria controle.
+[2026-02-06 13:09:12.103] N#?.....ok ativo operando corrente.
+[2026-02-06 13:09:17.129] fp......gpio sistema frequencia.
+[2026-02-06 13:09:22.147] b.......frequencia enviado sensor.
+[2026-02-06 13:09:27.164] ..$.....ok ok ok gpio falha.
+[2026-02-06 13:09:32.182] .Xp.....tensao corrente gpio.
+[2026-02-06 13:09:37.200] ........frequencia warning operando.
+[2026-02-06 13:09:42.115] i.......temperatura operando.
+[2026-02-06 13:09:47.132] kAU.....erro pressao operando.
+[2026-02-06 13:09:52.150] O.......frequencia ativo estado.
+[2026-02-06 13:09:57.168] ........operando pacote estado.
+[2026-02-06 13:10:02.097] .*:.....ativo sistema ok erro.
+[2026-02-06 13:10:07.203] .x......warning motor recebido.
+[2026-02-06 13:10:12.118] ........motor enviado inicializado.
+[2026-02-06 13:10:17.136] ........falha motor sistema.
+[2026-02-06 13:10:22.154] 7ck.....warning frequencia corrente.
+[2026-02-06 13:10:27.171] ........bateria sensor gpio.
+[2026-02-06 13:10:32.189] ........telemetria recebido.
+[2026-02-06 13:10:37.104] 2IP.....corrente tensao uart.
+[2026-02-06 13:10:42.122] 6.......sistema pacote estado.
+[2026-02-06 13:10:47.139] ........frequencia corrente.
+[2026-02-06 13:10:52.157] P35.....operando falha telemetria.
+[2026-02-06 13:10:57.174] ........operando tensao uart.
+[2026-02-06 13:11:02.192] @.......bateria temperatura.
+[2026-02-06 13:11:07.107] C.......operando uart telemetria.
+[2026-02-06 13:11:12.125] .hf.....recebido pacote ok pacote.
+[2026-02-06 13:11:17.115] ........operando bateria operando.
+[2026-02-06 13:11:22.160] ........frequencia telemetria.
+[2026-02-06 13:11:27.178] .RK.....operando bateria recebido.
+[2026-02-06 13:11:32.195] Q.......corrente falha tensao.
+[2026-02-06 13:11:37.214] P.......warning motor telemetria.
+[2026-02-06 13:11:42.128] R;0.....telemetria gpio bateria.
+[2026-02-06 13:11:47.146] b.|.....inicializado operando.
+[2026-02-06 13:11:52.163] R.......sistema enviado temperatura.
+[2026-02-06 13:11:57.184] .$......recebido tensao falha.
+[2026-02-06 13:12:02.198] .qa.....telemetria controle.
+[2026-02-06 13:12:07.114] ........pressao sensor sistema.
+[2026-02-06 13:12:12.131] A.......recebido recebido enviado.
+[2026-02-06 13:12:17.150] .[F.....estado temperatura corrente.
+[2026-02-06 13:12:22.166] ........enviado gpio sistema.
+[2026-02-06 13:12:27.184] ........operando enviado uart.
+[2026-02-06 13:12:32.202] nC+.....sensor pacote tensao.
+[2026-02-06 13:12:37.220] j.w.....tensao operando pressao.
+[2026-02-06 13:12:42.134] n.......enviado operando warning.
+[2026-02-06 13:12:47.152] .,......enviado enviado estado.
+[2026-02-06 13:12:52.170] )y\.....temperatura sistema.
+[2026-02-06 13:12:57.188] ........sistema pacote inicializado.
+[2026-02-06 13:13:02.205] 1.......enviado motor temperatura.
+[2026-02-06 13:13:07.120] |cA.....estado falha sistema.
+[2026-02-06 13:13:12.139] *.......gpio temperatura gpio.
+[2026-02-06 13:13:17.156] |.......tensao telemetria controle.
+[2026-02-06 13:13:22.174] .L&.....recebido estado frequencia.
+[2026-02-06 13:13:27.191] 7.r.....bateria pressao erro.
+[2026-02-06 13:13:32.122] ........recebido corrente recebido.
+[2026-02-06 13:13:37.113] .4......recebido operando motor.
+[2026-02-06 13:13:42.141] 1.W.....telemetria enviado gpio.
+[2026-02-06 13:13:47.159] ........sensor ok sensor pacote.
+[2026-02-06 13:13:52.177] ........bateria operando pressao.
+[2026-02-06 13:13:57.194] .k<.....operando inicializado.
+[2026-02-06 13:14:02.212] f.......temperatura controle.
+[2026-02-06 13:14:07.127] ........sistema controle sensor.
+[2026-02-06 13:14:12.144] uT!.....pressao motor estado.
+[2026-02-06 13:14:17.162] ..m.....warning pacote operando.
+[2026-02-06 13:14:22.180] &.......recebido falha estado.
+[2026-02-06 13:14:27.197]  >......falha frequencia erro.
+[2026-02-06 13:14:32.215] ..R.....ativo ativo recebido.
+[2026-02-06 13:14:37.233] ........corrente temperatura.
+[2026-02-06 13:14:42.148] N'......gpio warning uart uart.
+[2026-02-06 13:14:47.165] .t7.....temperatura warning.
+[2026-02-06 13:14:52.183] ........bateria enviado pacote.
+[2026-02-06 13:14:57.201] m.......sistema bateria bateria.
+[2026-02-06 13:15:02.219] h^. ....enviado corrente sistema.
+[2026-02-06 13:15:07.236] ..h ....inicializado controle.
+[2026-02-06 13:15:12.151] ... ....uart telemetria inicializado.
+[2026-02-06 13:15:17.169] AG.!....motor controle falha.
+[2026-02-06 13:15:22.186] ..M!....recebido motor frequencia.
+[2026-02-06 13:15:27.204] ...!....operando uart frequencia.
+[2026-02-06 13:15:32.222] x0.!....frequencia ok warning.
+[2026-02-06 13:15:37.239] .~2"....telemetria pressao sensor.
+[2026-02-06 13:15:42.154] 1.~"....telemetria sistema enviado.
+[2026-02-06 13:15:47.172] q.."....enviado pacote motor.
+[2026-02-06 13:15:52.190] .f.#....falha bateria recebido.
+[2026-02-06 13:15:57.207] ..c#....uart temperatura estado.
+[2026-02-06 13:16:02.226] 1..#....gpio temperatura motor.
+[2026-02-06 13:16:07.242] .O.#....operando falha tensao.
+[2026-02-06 13:16:12.143] ..H$....inicializado motor recebido.
+[2026-02-06 13:16:17.175] *..$....warning temperatura.
+[2026-02-06 13:16:22.143] f9.$....telemetria frequencia.
+[2026-02-06 13:16:27.211] ..-%....ok bateria warning warning.
+[2026-02-06 13:16:32.139] l.y%....falha gpio gpio temperatura.
+[2026-02-06 13:16:37.246] ,".%....bateria pressao ativo.
+[2026-02-06 13:16:42.162] To.&....falha sensor sensor.
+[2026-02-06 13:16:47.179] Z.^&....gpio estado corrente.
+[2026-02-06 13:16:52.197] [..&....uart corrente frequencia.
+[2026-02-06 13:16:57.214] TX.&....controle falha ativo.
+[2026-02-06 13:17:02.235] o.C'....erro pacote tensao corrente.
+[2026-02-06 13:17:07.249] ...'....corrente sistema uart.
+[2026-02-06 13:17:12.147] .A.'....recebido estado ativo.
+[2026-02-06 13:17:17.182] ..((....ok temperatura recebido.
+[2026-02-06 13:17:22.200] Q.t(....pressao corrente operando.
+[2026-02-06 13:17:27.217] r,.(....erro falha sistema warning.
+[2026-02-06 13:17:32.235] .y.)....motor sistema warning.
+[2026-02-06 13:17:37.253] L.Y)....uart estado ok estado.
+[2026-02-06 13:17:42.167] <..)....warning pacote frequencia.
+[2026-02-06 13:17:47.185] .c.)....pressao motor operando.
+[2026-02-06 13:17:52.145] n.>*....gpio bateria sensor.
+[2026-02-06 13:17:57.220] M..*....corrente telemetria.
+[2026-02-06 13:18:02.238] nM.*....gpio sensor recebido.
+[2026-02-06 13:18:07.153] ..#+....estado erro tensao tensao.
+[2026-02-06 13:18:12.170] ..o+....estado operando ativo.
+[2026-02-06 13:18:17.141] .7.+....telemetria inicializado.
+[2026-02-06 13:18:22.205] ...,....operando pressao telemetria.
+[2026-02-06 13:18:27.223] ..T,....gpio estado corrente.
+[2026-02-06 13:18:32.153] v!.,....ativo telemetria controle.
+[2026-02-06 13:18:37.156] .o.,....ativo ok recebido tensao.
+[2026-02-06 13:18:42.173] x.9-....controle controle pressao.
+[2026-02-06 13:18:47.191] ...-....operando sensor operando.
+[2026-02-06 13:18:52.187] mX.-....motor falha ok enviado.
+[2026-02-06 13:18:57.226] ........pacote corrente warning.
+[2026-02-06 13:19:02.244] n.j.....ativo motor uart pressao.
+[2026-02-06 13:19:07.159] .A......telemetria operando.
+[2026-02-06 13:19:12.176] .../....tensao pressao frequencia.
+[2026-02-06 13:19:17.194] ..O/....telemetria pressao controle.
+[2026-02-06 13:19:22.211] H*./....temperatura pressao.
+[2026-02-06 13:19:27.244] .x./....tensao controle pressao.
+[2026-02-06 13:19:32.247] ..40....corrente corrente bateria.
+[2026-02-06 13:19:37.162] ...0....bateria erro temperatura.
+[2026-02-06 13:19:42.180] .c.0....ok enviado tensao motor.
+[2026-02-06 13:19:47.197] ...1....falha warning sistema.
+[2026-02-06 13:19:52.215] c.e1....enviado pressao gpio.
+[2026-02-06 13:19:57.232] .L.1....telemetria inicializado.
+[2026-02-06 13:20:02.250] ~..1....uart estado temperatura.
+[2026-02-06 13:20:07.267] ..J2....gpio ativo frequencia.
+[2026-02-06 13:20:12.183] .5.2....estado recebido ok tensao.
+[2026-02-06 13:20:17.200] ...2....controle telemetria.
+[2026-02-06 13:20:22.218] ../3....controle sensor estado.
+[2026-02-06 13:20:27.235] ..|3....sistema enviado ativo.
+[2026-02-06 13:20:32.253] .l.3....tensao warning bateria.
+[2026-02-06 13:20:37.168] ...4....recebido uart tensao.
+[2026-02-06 13:20:42.185] ..a4....operando motor sistema.
+[2026-02-06 13:20:47.170] 3W.4....erro warning falha bateria.
+[2026-02-06 13:20:52.221] ...4....estado tensao inicializado.
+[2026-02-06 13:20:57.238] D.E5....ok falha ativo estado.
+[2026-02-06 13:21:02.256] .A.5....ok falha recebido temperatura.
+[2026-02-06 13:21:07.171] ...5....sensor pressao uart.
+[2026-02-06 13:21:12.188] /.*6....telemetria telemetria.
+[2026-02-06 13:21:17.206] ,*w6....sistema falha corrente.
+[2026-02-06 13:21:22.224] Jx.6....estado frequencia estado.
+[2026-02-06 13:21:27.241] ...7....falha warning ok uart.
+[2026-02-06 13:21:32.259] 2.\7....sistema telemetria gpio.
+[2026-02-06 13:21:37.176] .a.7....gpio pressao sensor.
+[2026-02-06 13:21:42.191] @..7....inicializado sensor.
+[2026-02-06 13:21:47.209] ..@8....inicializado sistema.
+[2026-02-06 13:21:52.170] 5L.8....ativo gpio bateria sistema.
+[2026-02-06 13:21:57.161] ...8....operando sistema pressao.
+[2026-02-06 13:22:02.262] 6.%9....estado pacote uart controle.
+[2026-02-06 13:22:07.161] a5r9....sensor controle enviado.
+[2026-02-06 13:22:12.195] c..9....recebido recebido pacote.
+[2026-02-06 13:22:17.212] h..:....frequencia warning temperatura.
+[2026-02-06 13:22:22.230] ..W:....estado sensor pressao.
+[2026-02-06 13:22:27.247] .m.:....sistema operando telemetria.
+[2026-02-06 13:22:32.265] ...:....estado pressao telemetria.
+[2026-02-06 13:22:37.180] ..<;....temperatura estado warning.
+[2026-02-06 13:22:42.198] FV.;....sistema bateria bateria.
+[2026-02-06 13:22:47.216] I..;....operando inicializado.
+[2026-02-06 13:22:52.233] .. <....erro temperatura temperatura.
+[2026-02-06 13:22:57.251] .?m<....ativo telemetria warning.
+[2026-02-06 13:23:02.268] ...<....gpio warning uart operando.
+[2026-02-06 13:23:07.183] >..=....enviado corrente falha.
+[2026-02-06 13:23:12.201] X(R=....erro falha motor erro.
+[2026-02-06 13:23:17.219] .u.=....frequencia controle.
+[2026-02-06 13:23:22.236] Z..=....pacote corrente corrente.
+[2026-02-06 13:23:27.254] ..7>....enviado sensor falha.
+[2026-02-06 13:23:32.271] c^.>....corrente telemetria.
+[2026-02-06 13:23:37.177] ...>....sensor temperatura warning.
+[2026-02-06 13:23:42.204] ...?....recebido tensao falha.
+[2026-02-06 13:23:47.222] .Gh?....ok inicializado enviado.
+[2026-02-06 13:23:52.239] +..?....operando tensao erro.
+[2026-02-06 13:23:57.257] X..@....inicializado estado.
+[2026-02-06 13:24:02.277] w0M@....enviado warning sensor.
+[2026-02-06 13:24:07.190] s~.@....tensao uart temperatura.
+[2026-02-06 13:24:12.207] '..@....tensao controle tensao.
+[2026-02-06 13:24:17.224] V.2A....tensao recebido uart.
+[2026-02-06 13:24:22.210] zh~A....tensao temperatura sistema.
+[2026-02-06 13:24:27.260] ...A....recebido enviado inicializado.
+[2026-02-06 13:24:32.277] ...B....inicializado frequencia.
+[2026-02-06 13:24:37.193] .QcB....pacote controle telemetria.
+[2026-02-06 13:24:42.210] ...B....uart gpio uart corrente.
+[2026-02-06 13:24:47.228] ...B....erro recebido sensor.
+[2026-02-06 13:24:52.245] .9HC....falha bateria pacote.
+[2026-02-06 13:24:57.263] ...C....inicializado gpio enviado.
+[2026-02-06 13:25:02.281] ...C....enviado telemetria controle.
+[2026-02-06 13:25:07.196] ."-D....erro inicializado falha.
+[2026-02-06 13:25:12.214] .pyD....sensor falha temperatura.
+[2026-02-06 13:25:17.231] \..D....sistema inicializado.
+[2026-02-06 13:25:22.248] ...E....temperatura corrente.
+[2026-02-06 13:25:27.266] bZ^E....pressao operando motor.
+[2026-02-06 13:25:32.284] ...E....corrente operando enviado.
+[2026-02-06 13:25:37.199] ...E....temperatura falha controle.
+[2026-02-06 13:25:42.193] #BCF....enviado bateria temperatura.
+[2026-02-06 13:25:47.234] d..F....temperatura estado corrente.
+[2026-02-06 13:25:52.253] ...F....sensor sensor sensor.
+[2026-02-06 13:25:57.269] .*(G....corrente controle frequencia.
+[2026-02-06 13:26:02.287] .xtG....ok falha enviado frequencia.
+[2026-02-06 13:26:07.202] R..G....telemetria operando.
+[2026-02-06 13:26:12.220] ...H....pressao ativo erro operando.
+[2026-02-06 13:26:17.238] ._YH....tensao sensor motor.
+[2026-02-06 13:26:22.255] ...H....tensao uart bateria.
+[2026-02-06 13:26:27.272] :..H....erro gpio enviado inicializado.
+[2026-02-06 13:26:32.290] .G>I....inicializado enviado.
+[2026-02-06 13:26:37.205] ...I....recebido temperatura.
+[2026-02-06 13:26:42.223] ...I....ativo uart bateria sistema.
+[2026-02-06 13:26:47.240] .0#J....corrente inicializado.
+[2026-02-06 13:26:52.258] .}oJ....operando uart falha.
+[2026-02-06 13:26:57.185] ...J....recebido uart telemetria.
+[2026-02-06 13:27:02.293] a..K....corrente warning frequencia.
+[2026-02-06 13:27:07.208] .gTK....tensao ok enviado pressao.
+[2026-02-06 13:27:12.226] 0..K....estado motor warning.
+[2026-02-06 13:27:17.243] l..K....gpio enviado operando.
+[2026-02-06 13:27:22.261] .O9L....pacote controle sensor.
+[2026-02-06 13:27:27.279] Q..L....falha falha pressao.
+[2026-02-06 13:27:32.296] ...L....uart recebido bateria.
+[2026-02-06 13:27:37.212] .8.M....temperatura corrente.
+[2026-02-06 13:27:42.229] ..jM....sensor operando falha.
+[2026-02-06 13:27:47.247] 4..M....temperatura falha frequencia.
+[2026-02-06 13:27:52.264] .!.N....gpio bateria frequencia.
+[2026-02-06 13:27:57.250] .oON....telemetria tensao ativo.
+[2026-02-06 13:28:02.197] ...N....temperatura operando.
+[2026-02-06 13:28:07.215] ...N....sistema telemetria ok.
+[2026-02-06 13:28:12.233] .W4O....falha ok telemetria.
+[2026-02-06 13:28:17.250] "..O....sistema pacote corrente.
+[2026-02-06 13:28:22.268] 3..O....operando uart sensor.
+[2026-02-06 13:28:27.285] pA.P....controle ok ativo tensao.
+[2026-02-06 13:28:32.303] ..eP....frequencia estado ativo.
+[2026-02-06 13:28:37.218] l..P....sensor frequencia operando.
+[2026-02-06 13:28:42.236] .).P....pacote inicializado.
+[2026-02-06 13:28:47.253] LxJQ....motor controle ok sistema.
+[2026-02-06 13:28:52.271] ,..Q....controle estado motor.
+[2026-02-06 13:28:57.288] ...Q....tensao bateria corrente.
+[2026-02-06 13:29:02.203] T`/R....sistema uart telemetria.
+[2026-02-06 13:29:07.221] ..{R....uart telemetria pacote.
+[2026-02-06 13:29:12.239] j..R....bateria erro falha falha.
+[2026-02-06 13:29:17.256] .H.S....enviado operando ativo.
+[2026-02-06 13:29:22.274] ..`S....frequencia tensao uart.
+[2026-02-06 13:29:27.291] G..S....sensor telemetria operando.
+[2026-02-06 13:29:32.309] .1.S....gpio inicializado warning.
+[2026-02-06 13:29:37.224] .~ET....uart ativo gpio sistema.
+[2026-02-06 13:29:42.242] ...T....uart erro recebido falha.
+[2026-02-06 13:29:47.259] ...T....inicializado operando.
+[2026-02-06 13:29:52.277] .g*U....estado recebido falha.
+[2026-02-06 13:29:57.295] ..vU....sistema recebido controle.
+[2026-02-06 13:30:02.210] m..U....pacote controle warning.
+[2026-02-06 13:30:07.217] .P.V....motor telemetria tensao.
+[2026-02-06 13:30:12.245] ..[V....operando sistema sistema.
+[2026-02-06 13:30:17.262] ...V....pacote ok frequencia.
+[2026-02-06 13:30:22.280] .<.V....bateria corrente temperatura.
+[2026-02-06 13:30:27.298] f.@W....inicializado inicializado.
+[2026-02-06 13:30:32.315] f..W....tensao gpio sistema.
+[2026-02-06 13:30:37.231] .#.W....uart erro bateria gpio.
+[2026-02-06 13:30:42.248] .s%X....sensor telemetria frequencia.
+[2026-02-06 13:30:47.266] 5.qX....operando frequencia.
+[2026-02-06 13:30:52.283] i..X....ativo pressao temperatura.
+[2026-02-06 13:30:57.301] .Z.Y....temperatura enviado.
+[2026-02-06 13:31:02.216] ..VY....inicializado bateria.
+[2026-02-06 13:31:07.234] ...Y....gpio frequencia controle.
+[2026-02-06 13:31:12.252] vD.Y....tensao recebido enviado.
+[2026-02-06 13:31:17.269] ..;Z....warning telemetria sensor.
+[2026-02-06 13:31:22.287] ...Z....temperatura operando.
+[2026-02-06 13:31:27.304] .,.Z....telemetria corrente.
+[2026-02-06 13:31:32.291] .z [....erro operando pressao.
+[2026-02-06 13:31:37.237] 4.l[....temperatura pacote enviado.
+[2026-02-06 13:31:42.254] \..[....telemetria temperatura.
+[2026-02-06 13:31:47.273] )e.\....enviado ok telemetria.
+[2026-02-06 13:31:52.290] ).Q\....uart pressao controle.
+[2026-02-06 13:31:57.307] ...\....estado ativo pressao.
+[2026-02-06 13:32:02.223] xO.\....telemetria ok uart erro.
+[2026-02-06 13:32:07.240] *.6]....gpio telemetria sistema.
+[2026-02-06 13:32:12.258] ...]....temperatura erro pacote.
+[2026-02-06 13:32:17.213] .8.]....sensor recebido corrente.
+[2026-02-06 13:32:22.293] ...^....enviado uart pressao.
+[2026-02-06 13:32:27.311] ..g^....sensor telemetria enviado.
+[2026-02-06 13:32:32.226] .!.^....pressao ok ok enviado.
+[2026-02-06 13:32:37.243] .p._....falha ok falha recebido.
+[2026-02-06 13:32:42.261] ..L_....enviado sistema inicializado.
+[2026-02-06 13:32:47.279] :.._....tensao ok telemetria.
+[2026-02-06 13:32:52.296] .Y._....enviado operando pacote.
+[2026-02-06 13:32:57.314] ..1`....recebido erro operando.
+[2026-02-06 13:33:02.229] ..}`....motor motor frequencia.
+[2026-02-06 13:33:07.247] .C.`....operando tensao warning.
+[2026-02-06 13:33:12.264] d..a....recebido falha estado.
+[2026-02-06 13:33:17.282] ..ba....tensao inicializado.
+[2026-02-06 13:33:22.299] .,.a....motor telemetria operando.
+[2026-02-06 13:33:27.317] .{.a....frequencia sensor recebido.
+[2026-02-06 13:33:32.232] 9.Gb....pressao tensao pressao.
+[2026-02-06 13:33:37.250] ...b....ativo ativo operando.
+[2026-02-06 13:33:42.267] .c.b....ativo uart controle.
+[2026-02-06 13:33:47.285] ..,c....sensor falha motor sensor.
+[2026-02-06 13:33:52.302] ..xc....gpio operando inicializado.
+[2026-02-06 13:33:57.320] xL.c....inicializado falha telemetria.
+[2026-02-06 13:34:02.235] ...d....corrente temperatura.
+[2026-02-06 13:34:07.253] ..]d....inicializado recebido.
+[2026-02-06 13:34:12.270] .4.d....operando warning gpio.
+[2026-02-06 13:34:17.290] q..d....estado gpio gpio uart.
+[2026-02-06 13:34:22.306] ..Be....uart estado frequencia.
+[2026-02-06 13:34:27.323] ...e....temperatura bateria.
+[2026-02-06 13:34:32.239] .l.e....falha sensor uart operando.
+[2026-02-06 13:34:37.256] ..'f....temperatura motor telemetria.
+[2026-02-06 13:34:42.274] ..tf....temperatura inicializado.
+[2026-02-06 13:34:47.291] 8U.f....ok frequencia recebido.
+[2026-02-06 13:34:52.309] ...g....telemetria sistema enviado.
+[2026-02-06 13:34:57.327] ..Xg....uart falha uart enviado.
+[2026-02-06 13:35:02.243] ;?.g....frequencia bateria pacote.
+[2026-02-06 13:35:07.238] o..g....temperatura pacote controle.
+[2026-02-06 13:35:12.277] V.=h....estado operando ok operando.
+[2026-02-06 13:35:17.295] =).h....ok inicializado frequencia.
+[2026-02-06 13:35:22.312] .x.h....bateria pressao operando.
+[2026-02-06 13:35:27.330] i."i....recebido corrente inicializado.
+[2026-02-06 13:35:32.245] ..oi....pacote tensao sistema.
+[2026-02-06 13:35:37.245] 5g.i....enviado gpio frequencia.
+[2026-02-06 13:35:42.280] ...j....falha estado estado.
+[2026-02-06 13:35:47.298] ..Tj....ok recebido falha bateria.
+[2026-02-06 13:35:52.316] .P.j....corrente frequencia.
+[2026-02-06 13:35:57.333] >..j....frequencia recebido.
+[2026-02-06 13:36:02.351] ..8k....recebido frequencia.
+[2026-02-06 13:36:07.267] E9.k....recebido warning estado.
+[2026-02-06 13:36:12.284] ...k....falha ok sensor enviado.
+[2026-02-06 13:36:17.301] ...l....corrente ok ativo uart.
+[2026-02-06 13:36:22.319] .#jl....falha controle frequencia.
+[2026-02-06 13:36:27.336] .n.l....uart falha telemetria.
+[2026-02-06 13:36:32.354] ...m....sensor frequencia recebido.
+[2026-02-06 13:36:37.269] ..Om....bateria temperatura.
+[2026-02-06 13:36:42.287] 3W.m....sistema gpio sensor.
+[2026-02-06 13:36:47.304] ...m....sistema gpio corrente.
+[2026-02-06 13:36:52.322] |.3n....ativo pacote tensao.
+[2026-02-06 13:36:57.339] .@.n....estado gpio ok recebido.
+[2026-02-06 13:37:02.255] ...n....erro estado pacote falha.
+[2026-02-06 13:37:07.272] q..o....gpio telemetria erro.
+[2026-02-06 13:37:12.290] +*eo....temperatura tensao tensao.
+[2026-02-06 13:37:17.308] Yw.o....operando motor falha.
+[2026-02-06 13:37:22.428] ...o....tensao sensor pressao.
+[2026-02-06 13:37:27.259] 9.Jp....telemetria frequencia.
+[2026-02-06 13:37:32.360] ._.p....bateria temperatura.
+[2026-02-06 13:37:37.276] [..p....ok sensor ativo inicializado.
+[2026-02-06 13:37:42.293] ...q....enviado pacote tensao.
+[2026-02-06 13:37:47.311] .J{q....tensao warning inicializado.
+[2026-02-06 13:37:52.329] ...q....temperatura uart gpio.
+[2026-02-06 13:37:57.346] I..r....telemetria temperatura.
+[2026-02-06 13:38:02.364] .3`r....erro motor erro controle.
+[2026-02-06 13:38:07.279] x..r....controle erro motor.
+[2026-02-06 13:38:12.256] ...r....ok sistema sistema frequencia.
+[2026-02-06 13:38:17.314] ..Es....sistema temperatura.
+[2026-02-06 13:38:22.332] +i.s....ok sensor falha erro.
+[2026-02-06 13:38:27.349] y..s....estado estado gpio tensao.
+[2026-02-06 13:38:32.264] ..*t....tensao uart bateria.
+[2026-02-06 13:38:37.282] .Rvt....gpio sensor ativo sistema.
+[2026-02-06 13:38:42.259] ...t....inicializado telemetria.
+[2026-02-06 13:38:47.317] ...u....pressao ok sensor controle.
+[2026-02-06 13:38:52.335] .<[u....pacote corrente bateria.
+[2026-02-06 13:38:57.352] ...u....enviado motor tensao.
+[2026-02-06 13:39:02.268] ...u....sensor pacote frequencia.
+[2026-02-06 13:39:07.286] .&@v....corrente erro uart pressao.
+[2026-02-06 13:39:12.265] .r.v....gpio motor corrente.
+[2026-02-06 13:39:17.321] ...v....recebido corrente operando.
+[2026-02-06 13:39:22.338] ..%w....pressao temperatura.
+[2026-02-06 13:39:27.355] .\qw....falha uart bateria ativo.
+[2026-02-06 13:39:32.373] n..w....tensao falha motor pressao.
+[2026-02-06 13:39:37.289] ^..x....recebido sensor estado.
+[2026-02-06 13:39:42.306] .DVx....temperatura gpio gpio.
+[2026-02-06 13:39:47.324] ...x....bateria erro operando.
+[2026-02-06 13:39:52.342] ...x....tensao enviado motor.
+[2026-02-06 13:39:57.359] ..;y....ok telemetria telemetria.
+[2026-02-06 13:40:02.274] .{.y....pacote gpio corrente.
+[2026-02-06 13:40:07.292] d..y....frequencia bateria falha.
+[2026-02-06 13:40:12.309] .. z....warning temperatura.
+[2026-02-06 13:40:17.327] Lflz....inicializado temperatura.
+[2026-02-06 13:40:22.345] ...z....tensao sensor temperatura.
+[2026-02-06 13:40:27.272] 3..{....ok enviado erro sistema.
+[2026-02-06 13:40:32.277] KOQ{....controle bateria uart.
+[2026-02-06 13:40:37.295] '..{....warning corrente sensor.
+[2026-02-06 13:40:42.415] F..{....pacote telemetria recebido.
+[2026-02-06 13:40:47.330] s86|....uart tensao uart pacote.
+[2026-02-06 13:40:52.348] C..|....operando motor tensao.
+[2026-02-06 13:40:57.263] A..|....pacote inicializado.
+[2026-02-06 13:41:02.383] .!.}....tensao telemetria tensao.
+[2026-02-06 13:41:07.298] .ng}....pressao falha ativo.
+[2026-02-06 13:41:12.418] ...}....warning ok sensor ok.
+[2026-02-06 13:41:17.333] S..~....ativo ativo warning.
+[2026-02-06 13:41:22.351] .XL~....corrente tensao telemetria.
+[2026-02-06 13:41:27.369] ...~....corrente warning sistema.
+[2026-02-06 13:41:32.284] f..~....motor inicializado estado.
+[2026-02-06 13:41:37.277] .@1.....tensao pacote operando.
+[2026-02-06 13:41:42.319] b.}.....motor controle operando.
+[2026-02-06 13:41:47.327] ........controle motor pacote.
+[2026-02-06 13:41:52.354] .)......sistema falha operando.
+[2026-02-06 13:41:57.372] .vb.....erro telemetria ativo.
+[2026-02-06 13:42:02.287] ........gpio pressao falha frequencia.
+[2026-02-06 13:42:07.304] ........ok enviado recebido.
+[2026-02-06 13:42:12.322] ._G.....pressao pacote sistema.
+[2026-02-06 13:42:17.281] ........bateria falha falha.
+[2026-02-06 13:42:22.357] ........tensao falha inicializado.
+[2026-02-06 13:42:27.376] .G,.....pacote motor pacote.
+[2026-02-06 13:42:32.393] ..x.....operando warning pressao.
+[2026-02-06 13:42:37.308] ........pacote motor falha pacote.
+[2026-02-06 13:42:42.326] =1......bateria temperatura.
+[2026-02-06 13:42:47.334] .~].....inicializado pressao.
+[2026-02-06 13:42:52.361] ........warning gpio tensao.
+[2026-02-06 13:42:57.379] ........operando pacote pressao.
+[2026-02-06 13:43:02.294] .gB.....tensao motor corrente.
+[2026-02-06 13:43:07.311] ........pressao operando temperatura.
+[2026-02-06 13:43:12.329] ........motor warning tensao.
+[2026-02-06 13:43:17.347] .P'.....tensao recebido estado.
+[2026-02-06 13:43:22.364] ..s.....ativo telemetria estado.
+[2026-02-06 13:43:27.381] ........uart sensor falha warning.
+[2026-02-06 13:43:32.297] .9......falha tensao pacote.
+[2026-02-06 13:43:37.314] :.X.....ativo recebido pacote.
+[2026-02-06 13:43:42.324] ........controle inicializado.
+[2026-02-06 13:43:47.350]  $......bateria tensao recebido.
+[2026-02-06 13:43:52.367] .q=.....frequencia motor pressao.
+[2026-02-06 13:43:57.282] ........sensor erro operando.
+[2026-02-06 13:44:02.300] ........temperatura ok bateria.
+[2026-02-06 13:44:07.318] .Z".....estado enviado recebido.
+[2026-02-06 13:44:12.335] ..n.....recebido sistema operando.
+[2026-02-06 13:44:17.353] ........gpio ativo pacote sistema.
+[2026-02-06 13:44:22.371] FD......enviado frequencia enviado.
+[2026-02-06 13:44:27.388] m.S.....falha inicializado estado.
+[2026-02-06 13:44:32.304] ........ativo frequencia gpio.
+[2026-02-06 13:44:37.321] T,......bateria recebido warning.
+[2026-02-06 13:44:42.339] .z8.....enviado pressao tensao.
+[2026-02-06 13:44:47.356] ;.......sensor temperatura motor.
+[2026-02-06 13:44:52.374] ........motor falha uart operando.
+[2026-02-06 13:44:57.393] .c......tensao estado ok sensor.
+[2026-02-06 13:45:02.308] ..i.....temperatura sensor ok.
+[2026-02-06 13:45:07.324] /.......uart recebido falha.
+[2026-02-06 13:45:12.342] .M......pacote temperatura pacote.
+[2026-02-06 13:45:17.360] *.N.....controle estado estado.
+[2026-02-06 13:45:22.377] ........frequencia tensao estado.
+[2026-02-06 13:45:27.395] .5......motor controle pressao.
+[2026-02-06 13:45:32.413] ..3.....telemetria controle.
+[2026-02-06 13:45:37.284] C.......controle falha uart.
+[2026-02-06 13:45:42.294] ........operando corrente ativo.
+[2026-02-06 13:45:47.306] .m......estado frequencia uart.
+[2026-02-06 13:45:52.303] ".d.....recebido ativo ativo.
+[2026-02-06 13:45:57.398] ........falha enviado tensao.
+[2026-02-06 13:46:02.313] .U......temperatura telemetria.
+[2026-02-06 13:46:07.331] ..I.....recebido corrente falha.
+[2026-02-06 13:46:12.348] ........gpio operando motor.
+[2026-02-06 13:46:17.366] .@......inicializado telemetria.
+[2026-02-06 13:46:22.384]  .......enviado operando sistema.
+[2026-02-06 13:46:27.401] ..z.....frequencia erro sistema.
+[2026-02-06 13:46:32.316] k(......inicializado controle.
+[2026-02-06 13:46:37.334] .u......ok falha pacote ativo.
+[2026-02-06 13:46:42.351] .._.....sistema pacote corrente.
+[2026-02-06 13:46:47.369] ........temperatura ok uart.
+[2026-02-06 13:46:52.387] ._......erro operando erro sistema.
+[2026-02-06 13:46:57.404] M.D.....controle bateria recebido.
+[2026-02-06 13:47:02.320] ........pressao ativo operando.
+[2026-02-06 13:47:07.337] .G......motor tensao recebido.
+[2026-02-06 13:47:12.355] ..).....pacote temperatura frequencia.
+[2026-02-06 13:47:17.372] h.u.....operando bateria gpio.
+[2026-02-06 13:47:22.390] .0......uart telemetria pacote.
+[2026-02-06 13:47:27.305] .}......inicializado frequencia.
+[2026-02-06 13:47:32.309] ..Z.....corrente falha telemetria.
+[2026-02-06 13:47:37.341] ........operando sensor bateria.
+[2026-02-06 13:47:42.358] .g......inicializado ok operando.
+[2026-02-06 13:47:47.376] ..?.....frequencia operando.
+[2026-02-06 13:47:52.393] ........pacote operando telemetria.
+[2026-02-06 13:47:57.411] .P......erro sistema corrente.
+[2026-02-06 13:48:02.326] ..$.....ativo bateria ok tensao.
+[2026-02-06 13:48:07.344] ,.p.....warning corrente ativo.
+[2026-02-06 13:48:12.361] .8......frequencia sensor tensao.
+[2026-02-06 13:48:17.379] ........pressao telemetria erro.
+[2026-02-06 13:48:22.396] 9.U.....pacote sistema estado.
+[2026-02-06 13:48:27.414] Q!......corrente ok erro enviado.
+[2026-02-06 13:48:32.329] To......erro telemetria enviado.
+[2026-02-06 13:48:37.312] ..:.....telemetria motor enviado.
+[2026-02-06 13:48:42.365] ........sistema gpio enviado.
+[2026-02-06 13:48:47.382] .W......corrente bateria inicializado.
+[2026-02-06 13:48:52.400] ........estado tensao sensor.
+[2026-02-06 13:48:57.418] p.k.....gpio falha ok uart erro.
+[2026-02-06 13:49:02.332] .?......estado sensor bateria.
+[2026-02-06 13:49:07.350] ........gpio sensor falha pressao.
+[2026-02-06 13:49:12.368] ..P.....ativo estado telemetria.
+[2026-02-06 13:49:17.344] .(......bateria gpio telemetria.
+[2026-02-06 13:49:22.333] .u......controle bateria pacote.
+[2026-02-06 13:49:27.318] ~.5.....uart recebido telemetria.
+[2026-02-06 13:49:32.438] b.......bateria bateria warning.
+[2026-02-06 13:49:37.353] .^......uart corrente motor.
+[2026-02-06 13:49:42.371] D.......telemetria operando.
+[2026-02-06 13:49:47.388] ..f.....recebido uart operando.
+[2026-02-06 13:49:52.320] .G......frequencia gpio erro.
+[2026-02-06 13:49:57.424] ........uart warning sensor.
+[2026-02-06 13:50:02.339] ..K.....tensao frequencia motor.
+[2026-02-06 13:50:07.357] .1......pacote falha frequencia.
+[2026-02-06 13:50:12.374] ........warning tensao sensor.
+[2026-02-06 13:50:17.322] ..0.....operando corrente estado.
+[2026-02-06 13:50:22.320] R.}.....warning pacote telemetria.
+[2026-02-06 13:50:27.325] .g......sensor sensor controle.
+[2026-02-06 13:50:32.342] M.......sensor warning operando.
+[2026-02-06 13:50:37.360] ..b.....ativo warning frequencia.
+[2026-02-06 13:50:42.325] @O......motor pacote corrente.
+[2026-02-06 13:50:47.395] }.......inicializado erro telemetria.
+[2026-02-06 13:50:52.413] ..F.....uart telemetria tensao.
+[2026-02-06 13:50:57.328] A9......inicializado inicializado.
+[2026-02-06 13:51:02.346] '.......warning estado ok controle.
+[2026-02-06 13:51:07.364] ..+.....ativo estado warning.
+[2026-02-06 13:51:12.381] ."x.....inicializado ativo sistema.
+[2026-02-06 13:51:17.398] .p......controle pressao pressao.
+[2026-02-06 13:51:22.323] ........corrente temperatura.
+[2026-02-06 13:51:27.331] Q.].....tensao uart erro pressao.
+[2026-02-06 13:51:32.349] .Y......erro uart recebido recebido.
+[2026-02-06 13:51:37.367] ~.......falha erro controle.
+[2026-02-06 13:51:42.384] 7.A.....inicializado tensao.
+[2026-02-06 13:51:47.401] .B......enviado falha controle.
+[2026-02-06 13:51:52.419] X.......operando erro telemetria.
+[2026-02-06 13:51:57.334] ..&.....sistema controle estado.
+[2026-02-06 13:52:02.352] %-s.....motor tensao ativo erro.
+[2026-02-06 13:52:07.370] .{......tensao temperatura bateria.
+[2026-02-06 13:52:12.387] o.......tensao temperatura enviado.
+[2026-02-06 13:52:17.405] ".X.....pacote telemetria sensor.
+[2026-02-06 13:52:22.525] ld......telemetria ok pacote.
+[2026-02-06 13:52:27.440] ........tensao operando tensao.
+[2026-02-06 13:52:32.355] W.=.....estado gpio corrente.
+[2026-02-06 13:52:37.372] JN......falha bateria pressao.
+[2026-02-06 13:52:42.390] ........pressao sensor pressao.
+[2026-02-06 13:52:47.407] L.!.....ativo operando sensor.
+[2026-02-06 13:52:52.332] %9n.....pacote motor uart tensao.
+[2026-02-06 13:52:57.340] ........ok falha pressao ok.
+[2026-02-06 13:53:02.358] ........motor ativo inicializado.
+[2026-02-06 13:53:07.375] 7!S.....sensor ativo recebido.
+[2026-02-06 13:53:12.393] Fo......uart bateria frequencia.
+[2026-02-06 13:53:17.368] +.......ativo tensao warning.
+[2026-02-06 13:53:22.428] ..8.....bateria telemetria controle.
+[2026-02-06 13:53:27.343] fX......corrente operando temperatura.
+[2026-02-06 13:53:32.361] ?.......temperatura ativo pressao.
+[2026-02-06 13:53:37.379] ........estado gpio uart controle.
+[2026-02-06 13:53:42.340] .?i.....temperatura warning.
+[2026-02-06 13:53:47.414] ........falha telemetria tensao.
+[2026-02-06 13:53:52.431] ........enviado pressao motor.
+[2026-02-06 13:53:57.449] .(N.....pressao ativo frequencia.
+[2026-02-06 13:54:02.364] -v......ok frequencia gpio operando.
+[2026-02-06 13:54:07.382] ;.......gpio estado pacote estado.
+[2026-02-06 13:54:12.344] n.3.....operando enviado bateria.
+[2026-02-06 13:54:17.417] .]......motor recebido ok enviado.
+[2026-02-06 13:54:22.434] ........ativo inicializado estado.
+[2026-02-06 13:54:27.331] t.......telemetria recebido.
+[2026-02-06 13:54:32.367] -Fd.....enviado controle bateria.
+[2026-02-06 13:54:37.385] ........motor sensor warning.
+[2026-02-06 13:54:42.403] u.......pressao controle uart.
+[2026-02-06 13:54:47.420] 6.I.....operando controle estado.
+[2026-02-06 13:54:52.438] .z......enviado inicializado.
+[2026-02-06 13:54:57.353] ........telemetria sensor tensao.
+[2026-02-06 13:55:02.371] ........gpio corrente enviado.
+[2026-02-06 13:55:07.388] adz.....sistema sistema sensor.
+[2026-02-06 13:55:12.406] ........controle operando erro.
+[2026-02-06 13:55:17.347] ........recebido ativo motor.
+[2026-02-06 13:55:22.441] .M_.....recebido estado warning.
+[2026-02-06 13:55:27.356] ........operando inicializado.
+[2026-02-06 13:55:32.335] ........recebido falha sistema.
+[2026-02-06 13:55:37.348] .5D.....enviado uart sistema.
+[2026-02-06 13:55:42.409] M.......gpio gpio sensor pacote.
+[2026-02-06 13:55:47.426] `.......sistema sensor pressao.
+[2026-02-06 13:55:52.348] ).).....warning sensor operando.
+[2026-02-06 13:55:57.362] .lu.....estado estado erro recebido.
+[2026-02-06 13:56:02.351] ........sensor bateria recebido.
+[2026-02-06 13:56:07.394] ........temperatura ok motor.
+[2026-02-06 13:56:12.350] .RZ.....sensor gpio enviado.
+[2026-02-06 13:56:17.349] ........temperatura pacote gpio.
+[2026-02-06 13:56:22.373] ........recebido sensor pressao.
+[2026-02-06 13:56:27.351] =;?.....frequencia enviado enviado.
+[2026-02-06 13:56:32.380] Q.......telemetria tensao sistema.
+[2026-02-06 13:56:37.353] I.......ativo enviado frequencia.
+[2026-02-06 13:56:42.341] ."$.....ativo operando gpio.
+[2026-02-06 13:56:47.351] vpp.....enviado telemetria uart.
+[2026-02-06 13:56:52.606] ........warning falha frequencia.
+[2026-02-06 13:56:58.015] ........ok telemetria operando.
+[2026-02-06 13:57:02.425] \hU.....telemetria recebido.
+[2026-02-06 13:57:07.355] ........pacote inicializado.
+[2026-02-06 13:57:12.346] ........operando corrente falha.
+[2026-02-06 13:57:17.347] .O:.....pressao sensor bateria.
+[2026-02-06 13:57:22.357] ........operando warning estado.
+[2026-02-06 13:57:27.355] ........estado frequencia corrente.
+[2026-02-06 13:57:32.354] .7......controle controle frequencia.
+[2026-02-06 13:57:37.358] ..k.....inicializado sensor.
+[2026-02-06 13:57:42.361] ........warning motor pacote.
+[2026-02-06 13:57:47.356] ........pressao bateria falha.
+[2026-02-06 13:57:52.361] .iP.....temperatura bateria.
+[2026-02-06 13:57:57.358] ........tensao enviado sensor.
+[2026-02-06 13:58:02.358] ........corrente uart enviado.
+[2026-02-06 13:58:07.356] .P5.....enviado sensor ativo.

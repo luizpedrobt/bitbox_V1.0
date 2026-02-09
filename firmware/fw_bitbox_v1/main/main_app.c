@@ -43,29 +43,9 @@ static void app_init_periph(void)
 {
     esp_log_level_set("*", ESP_LOG_NONE);
     esp_log_level_set(TAG, ESP_LOG_INFO);
-// #if CONFIG_PM_ENABLE
-//     esp_pm_config_t pm_config = 
-//     {
-//         .max_freq_mhz = 160, 
-//         .min_freq_mhz = 160,  
-//         .light_sleep_enable = true
-//     };
-
-//     ESP_ERROR_CHECK(esp_pm_configure(&pm_config));
-//     ESP_LOGI(TAG, "Gerenciamente de energia ativado!");
-// #endif
 
     embled_app_main();
     sdmmc_initialized = sdmmc_stor_init();
-    uart_periph_initialized = uart_periph_driver_init();
-    gpio_periph_main();
-
-    esp_err_t ret = nvs_flash_init();
-    ESP_ERROR_CHECK(ret);
-
-    gpio_install_isr_service(ESP_INTR_FLAG_IRAM);
-
-    app_config_main();
 
     if(wifi_conn_init())
     {
@@ -77,6 +57,16 @@ static void app_init_periph(void)
     {
         ESP_LOGI(TAG, "Falha ao conectar na rede! Partindo para o funcionamento offline!");
     }
+
+    uart_periph_initialized = uart_periph_driver_init();
+    gpio_periph_main();
+
+    esp_err_t ret = nvs_flash_init();
+    ESP_ERROR_CHECK(ret);
+
+    gpio_install_isr_service(ESP_INTR_FLAG_IRAM);
+
+    app_config_main();
 }
 
 /* --------- FUNCTION SOURCE ------------------------*/

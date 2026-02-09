@@ -2,6 +2,9 @@ import paho.mqtt.client as mqtt
 from datetime import datetime
 import ssl
 import os
+import argparse
+import struct
+import re
 
 # ================== CONFIG ==================
 BROKER_URL  = "qa717179.ala.us-east-1.emqxsl.com"
@@ -18,79 +21,112 @@ TOPICS = [
 ]
 
 CLIENT_ID = "datalogger_python_sub"
-
-LOG_DIR = "logs"
 # ============================================
+
+log_files = {}  # (periph, num) -> filepath
+
+
+def payload_to_ascii(payload: bytes) -> str:
+    return "".join(
+        chr(b) if 32 <= b <= 126 else "."
+        for b in payload
+    )
+
+
+def parse_topic(topic: str):
+    m = re.match(r"datalogger/(gpio|uart)/(\d+)", topic)
+    if not m:
+        return None, None
+    return m.group(1).upper(), int(m.group(2))
+
+
+def get_log_file(periph, num, base_dir):
+    key = (periph, num)
+    if key in log_files:
+        return log_files[key]
+
+    ts = datetime.now().strftime("%y-%m-%d %H-%M-%S")
+    filename = f"{ts}_{periph}_{num}.txt"
+    path = os.path.join(base_dir, filename)
+    log_files[key] = path
+    return path
 
 
 def on_connect(client, userdata, flags, rc):
     if rc == 0:
-        print("[MQTT] Conectado com sucesso (TLS)")
+        print("[MQTT] Conectado")
         for topic, qos in TOPICS:
             client.subscribe(topic, qos)
-            print(f"[MQTT] Subscrito em: {topic}")
     else:
-        print(f"[MQTT] Falha na conexão, rc={rc}")
-
-
-def on_disconnect(client, userdata, rc):
-    print("[MQTT] Desconectado do broker")
+        print(f"[MQTT] Falha na conexão rc={rc}")
 
 
 def on_message(client, userdata, msg):
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
-    topic = msg.topic
+    host_ts = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
 
-    # --- trate payload como binário por padrão ---
+    periph, num = parse_topic(msg.topic)
+    if periph is None:
+        return
+
     payload = msg.payload
+    if len(payload) < 8:
+        return  # inválido
 
-    try:
-        payload_str = payload.decode("utf-8")
-        printable = payload_str
-    except UnicodeDecodeError:
-        printable = payload.hex(" ")
+    # -------- timestamp do sistema (8 bytes) --------
+    ts_us = struct.unpack("<Q", payload[:8])[0]
+    data = payload[8:]
 
-    line = f"[{timestamp}] {topic}: {printable}"
+    # -------- interpretação por periférico --------
+    if periph == "GPIO":
+        if len(data) < 2:
+            return
+        level = data[0]
+        edge  = data[1]
+        frame_str = f"LEVEL: {level} | EDGE: {edge}"
 
+    elif periph == "UART":
+        frame_str = payload_to_ascii(data)
+
+    else:
+        return
+
+    line = f"[{host_ts}][{periph} {num}] [{ts_us}] {frame_str}"
     print(line)
-    save_log(topic, line)
 
-
-def save_log(topic, line):
-    os.makedirs(LOG_DIR, exist_ok=True)
-
-    safe_topic = topic.replace("/", "_")
-    filename = f"{safe_topic}.txt"
-    path = os.path.join(LOG_DIR, filename)
-
+    path = get_log_file(periph, num, userdata["log_dir"])
     with open(path, "a", encoding="utf-8") as f:
         f.write(line + "\n")
 
 
 def main():
-    client = mqtt.Client(client_id=CLIENT_ID)
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--log-dir",
+        default="logs",
+        help="Diretório de saída dos logs"
+    )
+    args = parser.parse_args()
 
-    # Auth
-    client.username_pw_set(USERNAME, PASSWORD)
+    os.makedirs(args.log_dir, exist_ok=True)
 
-    # TLS
-    client.tls_set(
-        ca_certs=CA_CERT_PATH,
-        certfile=None,
-        keyfile=None,
-        tls_version=ssl.PROTOCOL_TLSv1_2
+    client = mqtt.Client(
+        client_id=CLIENT_ID,
+        userdata={"log_dir": args.log_dir}
     )
 
+    client.username_pw_set(USERNAME, PASSWORD)
+
+    client.tls_set(
+        ca_certs=CA_CERT_PATH,
+        tls_version=ssl.PROTOCOL_TLSv1_2
+    )
     client.tls_insecure_set(False)
 
-    # Callbacks
     client.on_connect = on_connect
-    client.on_disconnect = on_disconnect
     client.on_message = on_message
 
-    print("[MQTT] Conectando ao broker EMQX Cloud...")
+    print("[MQTT] Conectando...")
     client.connect(BROKER_URL, BROKER_PORT, keepalive=60)
-
     client.loop_forever()
 
 

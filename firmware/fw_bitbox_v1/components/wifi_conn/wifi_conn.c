@@ -13,6 +13,7 @@
 #include "esp_event.h"
 
 #include "driver/gpio.h"
+#include "esp_pm.h"
 
 #include "wifi_conn.h"
 #include "esp_timer.h"
@@ -180,8 +181,12 @@ static const char *html_page =
 "label { font-size: 0.85rem; color: #cbd5f5; }"
 "input, select { width: 100%; padding: 11px 12px; margin-top: 6px; margin-bottom: 14px; border-radius: 8px; border: 1px solid #1e293b; background: #020617; color: #e5e7eb; box-sizing: border-box; }"
 "input:focus, select:focus { outline: none; border-color: #38bdf8; }"
+/* Checkbox Customizado */
+".chk-container { display: flex; align-items: center; margin-bottom: 15px; background: #1e293b; padding: 10px; border-radius: 8px; border: 1px solid #334155; }"
+"input[type='checkbox'] { width: 20px; height: 20px; margin: 0 10px 0 0; cursor: pointer; accent-color: #10b981; }"
+".chk-label { font-size: 0.9rem; font-weight: bold; color: white; cursor: pointer; }"
 "button { width: 100%; padding: 12px; border: none; border-radius: 10px; background: #0284c7; color: white; font-size: 1rem; font-weight: 600; cursor: pointer; }"
-"button:hover { background: #0369a1; }"
+".disabled-area { opacity: 0.3; pointer-events: none; transition: opacity 0.3s; }"
 ".footer { margin-top: 14px; font-size: 0.75rem; color: #64748b; text-align: center; }"
 ".hidden { display: none; }"
 ".spinner { width: 42px; height: 42px; border: 4px solid #1e293b; border-top: 4px solid #38bdf8; border-radius: 50%; animation: spin 1s linear infinite; margin: 20px auto; }"
@@ -192,24 +197,41 @@ static const char *html_page =
 "<div class='card' id='formCard'>"
 "<h2>Datalogger Setup</h2>"
 "<form method='POST' action='/save' onsubmit='showLoading()'>"
+
+"<div class='chk-container'>"
+"<input type='checkbox' name='offline' id='offline' value='1' onchange='toggleWifi()'>"
+"<label for='offline' class='chk-label'>Modo Offline (Sem Wi-Fi)</label>"
+"</div>"
+
+"<div id='wifi-area'>"
 "<label>SSID</label>"
-"<select name='ssid' id='ssid' required>"
+"<select name='ssid' id='ssid'>"
 "<option value='' disabled selected>Carregando redes...</option>"
 "</select>"
 "<button type='button' onclick='loadNetworks()' style='margin-bottom:14px; background:#1e293b; font-size:0.8rem; padding:8px;'>↻ Atualizar Lista</button>"
 "<label>Senha</label>"
 "<input name='pass' type='password' placeholder='Senha do Wi-Fi'>"
+"</div>"
+
 "<button type='submit'>Salvar Configuração</button>"
 "</form>"
 "<div class='footer'>Firmware Config Portal</div>"
 "</div>"
+
 "<div class='card hidden' id='loadingCard'>"
 "<h2>Configurando...</h2>"
 "<div class='spinner'></div>"
 "<p style='text-align:center;font-size:0.9rem;color:#cbd5f5;'>Salvando e reiniciando...</p>"
 "</div>"
+
 "<script>"
 "function showLoading() { document.getElementById('formCard').classList.add('hidden'); document.getElementById('loadingCard').classList.remove('hidden'); }"
+"function toggleWifi() {"
+"  var chk = document.getElementById('offline');"
+"  var area = document.getElementById('wifi-area');"
+"  if(chk.checked) area.classList.add('disabled-area');"
+"  else area.classList.remove('disabled-area');"
+"}"
 "function loadNetworks() {"
 "  var s = document.getElementById('ssid');"
 "  s.innerHTML = '<option disabled selected>Escaneando...</option>';"
@@ -429,12 +451,19 @@ static esp_err_t captive_get_handler(httpd_req_t *req)
 
 static esp_err_t save_gpio_handler(httpd_req_t *req)
 {
+    if (!is_hw_portal)
+    {
+        ESP_LOGW(TAG, "Tentativa de salvar GPIO no portal errado.");
+        httpd_resp_send_err(req, HTTPD_403_FORBIDDEN, "Portal Invalido");
+        return ESP_FAIL;
+    }
+
     char buf[4096]; 
     int ret, remaining = req->content_len;
 
     if (remaining >= sizeof(buf)) 
     {
-        ESP_LOGE(TAG, "Payload muito grande para o buffer");
+        ESP_LOGE(TAG, "Payload muito grande");
         httpd_resp_send_500(req);
         return ESP_FAIL;
     }
@@ -443,8 +472,13 @@ static esp_err_t save_gpio_handler(httpd_req_t *req)
     if (ret <= 0) return ESP_FAIL;
     buf[ret] = '\0';
 
-    sys_config_uart_t sys_uart = {0};
-    sys_config_gpio_t sys_gpio = {0};
+    // Inicializa as estruturas com ZERO para evitar lixo de memória
+    sys_config_uart_t sys_uart;
+    sys_config_gpio_t sys_gpio;
+    
+    memset(&sys_uart, 0, sizeof(sys_config_uart_t));
+    memset(&sys_gpio, 0, sizeof(sys_config_gpio_t));
+
     char val[16];
     char key[32];
     
@@ -475,14 +509,29 @@ static esp_err_t save_gpio_handler(httpd_req_t *req)
     }
     sys_uart.uart_cnt = active_uart_count;
 
+    // --- GPIO ---
     int active_gpio_count = 0;
 
-    for (int i = 0; i < GPIO_BOARD_MAX; i++) 
+    // Lista de mapeamento: Índice do Loop HTML -> Enum da Placa
+    const int valid_gpios[] = { 
+        GPIO_BOARD_1, GPIO_BOARD_2, GPIO_BOARD_3, GPIO_BOARD_4, GPIO_BOARD_5, 
+        GPIO_BOARD_33, GPIO_BOARD_34, GPIO_BOARD_35, GPIO_BOARD_36, GPIO_BOARD_37 
+    };
+    const int num_valid_gpios = sizeof(valid_gpios)/sizeof(valid_gpios[0]);
+
+    for (int i = 0; i < num_valid_gpios; i++) 
     {
+        // Proteção para não estourar o array da struct
+        if (active_gpio_count >= GPIO_BOARD_MAX) break;
+
         snprintf(key, sizeof(key), "g_en_%d", i);
         
         if (httpd_query_key_value(buf, key, val, sizeof(val)) == ESP_OK) 
         {
+            // Debug: Verifique se isso aparece mais vezes do que deveria no log
+            ESP_LOGI(TAG, "Encontrado GPIO habilitado no HTML index: %d", i);
+
+            // Mapeia o índice do HTML (0..9) para o Enum interno
             sys_gpio.gpios[active_gpio_count].gpio_num = (gpio_available_ports_t)i; 
             sys_gpio.gpios[active_gpio_count].state = true;
 
@@ -512,32 +561,26 @@ static esp_err_t save_gpio_handler(httpd_req_t *req)
                 }
             }
 
-            // Pull Up: 0=DIS, 1=EN
             snprintf(key, sizeof(key), "pu_%d", i);
             if (httpd_query_key_value(buf, key, val, sizeof(val)) == ESP_OK)
-            {
                 sys_gpio.gpios[active_gpio_count].pull_up_en = (atoi(val) == 1) ? GPIO_PULLUP_ENABLE : GPIO_PULLUP_DISABLE;
-            }
 
-            // Pull Down: 0=DIS, 1=EN
             snprintf(key, sizeof(key), "pd_%d", i);
             if (httpd_query_key_value(buf, key, val, sizeof(val)) == ESP_OK)
-            {
                 sys_gpio.gpios[active_gpio_count].pull_down_en = (atoi(val) == 1) ? GPIO_PULLDOWN_ENABLE : GPIO_PULLDOWN_DISABLE;
-            }
 
             active_gpio_count++;
         }
     }
     
     sys_gpio.gpio_cnt = active_gpio_count;
+    ESP_LOGI(TAG, "Salvando %d GPIOs e %d UARTs", active_gpio_count, active_uart_count);
 
     esp_err_t err_u = app_config_uart_save(&sys_uart);
     esp_err_t err_g = app_config_gpio_save(&sys_gpio);
 
     if (err_u == ESP_OK && err_g == ESP_OK) 
     {
-        ESP_LOGI(TAG, "Config salva: %d UARTs, %d GPIOs.", active_uart_count, active_gpio_count);
         httpd_resp_sendstr(req, "Configuração salva. Reiniciando...");
         vTaskDelay(pdMS_TO_TICKS(1000));
         esp_restart();
@@ -633,22 +676,38 @@ static bool wifi_conn_init_sta(wifi_config_t *cfg)
 
 static esp_err_t save_post_handler(httpd_req_t *req)
 {
-    char buf[224];
-    int len = httpd_req_recv(req, buf, sizeof(buf) - 1);
-    if (len <= 0)
+    // 2. Intertravamento: Se for portal de Hardware, rejeita salvamento de Wi-Fi
+    if (is_hw_portal)
     {
+        ESP_LOGW(TAG, "Tentativa de salvar Wi-Fi no portal de Hardware.");
+        httpd_resp_send_err(req, HTTPD_403_FORBIDDEN, "Portal Invalido");
         return ESP_FAIL;
     }
-        
+
+    char buf[224];
+    int len = httpd_req_recv(req, buf, sizeof(buf) - 1);
+    if (len <= 0) return ESP_FAIL;
     buf[len] = '\0';
 
     sys_config_netw_t netw_cfg = { 0 };
+    char val_off[4];
 
-    httpd_query_key_value(buf, "ssid", netw_cfg.ssid, sizeof(netw_cfg.ssid));
-    httpd_query_key_value(buf, "pass", netw_cfg.pass, sizeof(netw_cfg.pass));
+    if (httpd_query_key_value(buf, "offline", val_off, sizeof(val_off)) == ESP_OK)
+    {
+        netw_cfg.offline_mode = (atoi(val_off) == 1);
+    }
+    else
+    {
+        netw_cfg.offline_mode = false;
+    }
 
-    url_decode_inplace(netw_cfg.ssid);
-    url_decode_inplace(netw_cfg.pass);
+    if (!netw_cfg.offline_mode)
+    {
+        httpd_query_key_value(buf, "ssid", netw_cfg.ssid, sizeof(netw_cfg.ssid));
+        httpd_query_key_value(buf, "pass", netw_cfg.pass, sizeof(netw_cfg.pass));
+        url_decode_inplace(netw_cfg.ssid);
+        url_decode_inplace(netw_cfg.pass);
+    }
 
     app_config_netw_save(&netw_cfg);
 
@@ -927,28 +986,55 @@ bool wifi_conn_init(void)
 
     xTaskCreate(config_task, "config_task", 4096, NULL, 10, &config_task_handle);
 
-    ESP_LOGI(TAG, "Inicializando a Stack de wifi pessoal!");
+    ESP_LOGI(TAG, "Lendo configurações de rede...");
 
     sys_config_netw_t netw_cfg = { 0 };                        
     
+    // Tenta carregar config
     if(app_config_netw_load(&netw_cfg) != ESP_OK) 
     {
-        ESP_LOGW(TAG, "Nenhum wifi anterior configurado! Abrindo portal.");
+        ESP_LOGW(TAG, "Nenhuma config encontrada. Abrindo Portal.");
         wifi_start_captive_portal();
         return false;
     }
 
-    else
+    // --- LÓGICA OFFLINE ---
+if (netw_cfg.offline_mode)
     {
-        ESP_LOGI(TAG, "Tentando realizar conexão com a rede %s!", netw_cfg.ssid);
+        ESP_LOGW(TAG, ">>> MODO OFFLINE ATIVADO <<<");
 
-        wifi_config_t wifi_cfg = { 0 };
+        esp_wifi_stop();
 
-        memcpy(wifi_cfg.sta.ssid, netw_cfg.ssid, strlen(netw_cfg.ssid));
-        memcpy(wifi_cfg.sta.password, netw_cfg.pass, strlen(netw_cfg.pass));
+#if CONFIG_PM_ENABLE
+            esp_pm_config_t pm_config = 
+            {
+                .max_freq_mhz = 80,  
+                .min_freq_mhz = 80,  
+                .light_sleep_enable = true 
+            };
+            
+            esp_err_t err = esp_pm_configure(&pm_config);
+            
+            if (err == ESP_OK) 
+            {
+                ESP_LOGI(TAG, "CPU Clock travado em 80MHz com Auto Light Sleep.");
+            } 
+            
+            else 
+            {
+                ESP_LOGE(TAG, "Falha ao configurar PM: %s", esp_err_to_name(err));
+            }
+#endif
 
-        ESP_LOGI(TAG, "Inicializando Wi-Fi STA...");
-
-        return wifi_conn_init_sta(&wifi_cfg);
+        return false;
     }
+
+    // ----------------------
+
+    ESP_LOGI(TAG, "Conectando em %s...", netw_cfg.ssid);
+    wifi_config_t wifi_cfg = { 0 };
+    memcpy(wifi_cfg.sta.ssid, netw_cfg.ssid, strlen(netw_cfg.ssid));
+    memcpy(wifi_cfg.sta.password, netw_cfg.pass, strlen(netw_cfg.pass));
+
+    return wifi_conn_init_sta(&wifi_cfg);
 }

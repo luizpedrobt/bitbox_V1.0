@@ -5,6 +5,7 @@
 #include "esp_system.h"
 #include "freertos/idf_additions.h"
 #include "freertos/FreeRTOS.h"
+#include "freertos/projdefs.h"
 #include "freertos/task.h"
 #include "freertos/queue.h"
 #include "freertos/semphr.h"
@@ -25,11 +26,7 @@
 
 #include "app_config.h"
 
-#define UART_FRAME_TIMEOUT_US 2000000
-#define UART_POLL_INTERVAL_MS 50 // checagem de timeout
-
-static int64_t last_rx_time[UART_NUM_MAX] = { 0 };
-static bool has_pending_data[UART_NUM_MAX] = { false };
+#define UART_PARSE_BUDGET 128   
 
 static const char *TAG = "UART_PERIPH";
 
@@ -70,12 +67,7 @@ void uart_set_new_configure(uart_cfg_t *cfg)
     uart_config_save_update(cfg);
     uart_apply_config(cfg);
 
-    static bool record_task_created = false;
-    if (!record_task_created)
-    {
-        xTaskCreate(uart_record_data_task, "record_data_task", 4096, NULL, 4, NULL);
-        record_task_created = true;
-    }
+    xTaskCreate(uart_record_data_task, "record_data_task", 8192, (void *)cfg->uart_num, 1, NULL);
 }
 
 /* --------- STATIC FUNCTIONS SOURCES ------------*/
@@ -86,23 +78,22 @@ static void uart_periph_driver_task(void *arg)
     ESP_LOGI(TAG, "TASK da UART%d iniciada!", uart_num);
 
     uart_event_t event;
-    uint8_t *data = (uint8_t *)pvPortMalloc(2000);
+    uint8_t data[2048];
     uint32_t written = 0;
 
     while (1)
     {
-        if(xQueueReceive(uart_queue[uart_num], &event, portMAX_DELAY))
+        if(xQueueReceive(uart_queue[uart_num], &event, pdMS_TO_TICKS(10)))
         {
             switch (event.type)
             {
                 case UART_DATA:
-                    int len = uart_read_bytes(uart_num, data, event.size, portMAX_DELAY);
+                    int len = uart_read_bytes(uart_num, data, event.size, pdMS_TO_TICKS(100));
                     if(len > 0)
                     {
                         utl_cbf_put_n(uart_circ_buffers[uart_num], data, len, &written);
 
-                        last_rx_time[uart_num] = esp_timer_get_time();
-                        has_pending_data[uart_num] = true;
+                        ESP_LOGI(TAG, "TASK UART%d: <- %d bytes armazenados no buffer circular!", uart_num, event.size);
                     }
                     
                     break;
@@ -132,87 +123,63 @@ static void process_uart_packet(uart_port_t uart_num, sd_log_msg_t *ctx)
         ctx->log_header.log_type   = SD_LOG_UART;
         ctx->log_header.periph_num = uart_num;
 
-        if(ctx->uart.payload_len < UART_MAX_PAYLOAD_LEN) 
-        {
-            ctx->uart.payload[ctx->uart.payload_len] = 0; 
-        }
-
         sd_log_data(ctx);
         mqtt_publish_msg(ctx);
         
         ctx->uart.payload_len = 0;
-        has_pending_data[uart_num] = false;
     }
 }
 
 static void uart_record_data_task(void *arg)
 {
-    static uint8_t uart_byte;
-    static sd_log_msg_t uart_raw_data[UART_NUM_MAX] = { 0 };
+    uart_port_t uart_num = (uart_port_t)arg;
 
-    bool activity_detected = false;
+    sd_log_msg_t *ctx = (sd_log_msg_t *)malloc(sizeof(sd_log_msg_t));
+    if (ctx == NULL) 
+    {
+        ESP_LOGE(TAG, "Falha de memoria na UART%d", uart_num);
+        vTaskDelete(NULL);
+    }
+
+    memset(ctx, 0, sizeof(sd_log_msg_t));
+
+    static uint8_t uart_byte;
 
     while (1)
     {
-        int64_t now = esp_timer_get_time();
-        activity_detected = false;
+        int processed = 0;
 
-        for (uart_port_t uart_num = UART_NUM_0; uart_num < UART_NUM_MAX; uart_num++)
+        while (utl_cbf_bytes_available(uart_circ_buffers[uart_num]) && processed < UART_PARSE_BUDGET)
         {
-            if (!uart_installeds[uart_num])
+            utl_cbf_get(uart_circ_buffers[uart_num], &uart_byte);
+            processed++;
+
+            if (uart_byte == 0x00)
             {
-                continue;
+                ESP_LOGI(TAG, "\\0 detectado. %d bytes. UART%d", ctx->uart.payload_len, uart_num);
+
+                process_uart_packet(uart_num, ctx);
             }
-                
-            sd_log_msg_t *ctx = &uart_raw_data[uart_num];
 
-            while (utl_cbf_bytes_available(uart_circ_buffers[uart_num]))
+            else
             {
-                activity_detected = true;
-
-                utl_cbf_get(uart_circ_buffers[uart_num], &uart_byte);
-
-                if (uart_byte != 0x00)
+                if (ctx->uart.payload_len < UART_MAX_PAYLOAD_LEN)
                 {
-                    if (ctx->uart.payload_len < UART_MAX_PAYLOAD_LEN)
-                    {
-                        ctx->uart.payload[ctx->uart.payload_len++] = uart_byte;
-                    }
-
-                    else
-                    {
-                        process_uart_packet(uart_num, ctx);
-
-                        ctx->uart.payload[ctx->uart.payload_len++] = uart_byte;
-                    }
+                    ctx->uart.payload[ctx->uart.payload_len++] = uart_byte;
                 }
 
                 else
                 {
-                    process_uart_packet(uart_num, ctx);
-                }
-            }
-
-            if ((has_pending_data[uart_num]) && (ctx->uart.payload_len > 0))
-            {
-                if ((now - last_rx_time[uart_num]) > UART_FRAME_TIMEOUT_US)
-                {
-                    process_uart_packet(uart_num, ctx);
+                    ESP_LOGW(TAG, "Buffer cheio. Resetando frame.");
+                    ctx->uart.payload_len = 0;
                 }
             }
         }
-
-        if(activity_detected)
-        {
-            vTaskDelay(pdMS_TO_TICKS(10));
-        }
-
-        else
-        {
-            vTaskDelay(pdMS_TO_TICKS(100));
-        }
-        
+        taskYIELD();
     }
+    
+    free(ctx);
+    vTaskDelete(NULL);
 }
 
 static void uart_config_save_update(const uart_cfg_t *cfg)
@@ -271,17 +238,13 @@ static void uart_apply_config(const uart_cfg_t *cfg)
         .stop_bits = UART_STOP_BITS_1,
         .parity    = UART_PARITY_DISABLE,
         .flow_ctrl = UART_HW_FLOWCTRL_DISABLE,
-        .source_clk = UART_SCLK_DEFAULT,
     };
 
     uart_param_config(cfg->uart_num, &uart_config);
     uart_set_pin(cfg->uart_num, cfg->tx_pin, cfg->rx_pin, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
-    uart_driver_install(cfg->uart_num, 1024, 0, 20, &uart_queue[cfg->uart_num], 0);
+    uart_driver_install(cfg->uart_num, 8192, 0, 20, &uart_queue[cfg->uart_num], 0);
                         
-    has_pending_data[cfg->uart_num] = false;
-    last_rx_time[cfg->uart_num] = esp_timer_get_time();
-
-    xTaskCreate(uart_periph_driver_task, "uart_rx_task",8191, (void *)cfg->uart_num, 5, &uart_task_handlers[cfg->uart_num]);
+    xTaskCreate(uart_periph_driver_task, "uart_rx_task",8192, (void *)cfg->uart_num, 10, &uart_task_handlers[cfg->uart_num]);
 
     ESP_LOGI(TAG, "UART%d instalada! Tx: GPIO%d | Rx: GPIO%d a %dbps", cfg->uart_num, cfg->tx_pin, cfg->rx_pin, cfg->baudrate);
     uart_installeds[cfg->uart_num] = true;
@@ -297,4 +260,3 @@ bool uart_periph_driver_init(void)
     esp_log_level_set(TAG, ESP_LOG_INFO);
     return true;
 }
-

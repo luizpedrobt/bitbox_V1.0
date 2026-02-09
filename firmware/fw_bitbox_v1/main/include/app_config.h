@@ -35,6 +35,7 @@ typedef struct sys_config_netw_s
 {
     char ssid[32];
     char pass[64];
+    bool offline_mode;
 } sys_config_netw_t;
 
 #define X(IDX, PERIPH_CFG, ST_PERIPH, CFG_VAR, NAMESPACE, FUNC_PROT) esp_err_t FUNC_PROT##_save(const ST_PERIPH *CFG_VAR);
@@ -49,3 +50,4 @@ esp_err_t app_config_erase_all(void);
 
 void app_config_main(void);
 
+bool app_config_get_online_mode(void);

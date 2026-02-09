@@ -1,43 +1,63 @@
-# enviar_pacotes.py
+# enviar_pacotes_ascii.py
 import serial
 import time
 import random
-import os
+import string
 
-PORT = "/dev/ttyACM1"    # ajuste se necessário
-BAUD = 115200
+PORT = "/dev/ttyACM1"     # ajuste se necessário
+BAUD = 230400
 
-MIN_SIZE = 10           # tamanho mínimo do payload (bytes)
-MAX_SIZE = 900          # tamanho máximo (antes do 0x00)
-PERIOD = 5.0            # segundos entre pacotes
+MIN_SIZE = 20            # tamanho mínimo da frase (sem o \0)
+MAX_SIZE = 900           # tamanho máximo da frase (sem o \0)
+PERIOD = 5.0             # segundos entre envios
 
-random.seed()           # seed automática
+random.seed()
 
-with serial.Serial(PORT, BAUD, timeout=5) as s:
-    time.sleep(0.1)  # tempo para abrir a porta
 
-    print("Enviando pacotes de tamanho variável terminados em \\0 ...")
+WORDS = [
+    "sistema", "ativo", "falha", "sensor", "temperatura", "pressao",
+    "controle", "estado", "motor", "inicializado", "erro", "warning",
+    "telemetria", "pacote", "recebido", "enviado", "ok", "operando",
+    "bateria", "tensao", "corrente", "frequencia", "uart", "gpio"
+]
+
+
+def generate_sentence(min_len, max_len):
+    """
+    Gera uma frase ASCII legível com tamanho controlado
+    """
+    sentence = ""
+
+    while len(sentence) < min_len:
+        word = random.choice(WORDS)
+        sentence += word + " "
+
+    # corta se passar do máximo
+    sentence = sentence[:max_len]
+
+    # remove espaço final se existir
+    sentence = sentence.rstrip()
+
+    return sentence
+
+
+with serial.Serial(PORT, BAUD, timeout=1) as s:
+    time.sleep(0.2)  # tempo para estabilizar a porta
+
+    print("Enviando frases ASCII terminadas em \\0 ...")
 
     while True:
-        # tamanho pseudo-aleatório do payload
-        payload_len = random.randint(MIN_SIZE, MAX_SIZE)
+        sentence = generate_sentence(MIN_SIZE, MAX_SIZE)
 
-        # gera payload binário arbitrário (sem 0x00)
-        payload = bytearray()
-        while len(payload) < payload_len:
-            b = random.randint(1, 255)  # evita 0x00
-            payload.append(b)
-
-        # adiciona delimitador de frame
-        payload.append(0x00)
+        payload = sentence.encode("ascii") + b"\x00"
 
         t0 = time.perf_counter()
-
         s.write(payload)
         s.flush()
-
         t1 = time.perf_counter()
-        print(f"Frame enviado: {payload_len} bytes + 0x00 "
-              f"({t1 - t0:.6f} s)")
+
+        print(f"Frame enviado: {len(payload)-1} bytes + \\0")
+        print(f"Conteúdo: \"{sentence}\"")
+        print(f"Tempo de envio: {t1 - t0:.6f}s\n")
 
         time.sleep(PERIOD)

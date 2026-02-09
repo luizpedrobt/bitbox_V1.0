@@ -28,6 +28,8 @@ const int gpio_pins[GPIO_BOARD_MAX] = { 1 , 2, 3, 4, 5, 33, 34, 35, 36, 37 };
     XMACRO_SYS_CONFIG
 #undef X
 
+bool online_mode = false;
+
 static TaskHandle_t reset_task_handle = NULL;
 
 static void IRAM_ATTR reset_button_isr(void *arg)
@@ -293,6 +295,11 @@ esp_err_t app_config_erase_all(void)
     return err;
 }
 
+bool app_config_get_online_mode(void)
+{
+    return online_mode;
+}
+
 void app_config_main(void)
 {
     esp_log_level_set(TAG, ESP_LOG_INFO);
@@ -301,36 +308,52 @@ void app_config_main(void)
     sys_config_uart_t uart_cfg = {0};
     sys_config_gpio_t gpio_cfg = {0};
 
+    bool pin_initialized[40] = {false}; 
+
     /* ---------- UART ---------- */
     app_config_uart_load(&uart_cfg);
-
-    ESP_LOGI(TAG, "Configurações de UART carregadas: %d UART(s)", uart_cfg.uart_cnt);
+    ESP_LOGI(TAG, "UARTs carregadas: %d", uart_cfg.uart_cnt);
 
     for (uint8_t i = 0; i < UART_NUM_MAX; i++)
     {
         if (uart_cfg.uarts[i].state)
         {
+            if (uart_cfg.uarts[i].tx_pin < 0 || uart_cfg.uarts[i].rx_pin < 0) 
+                continue;
+
             ESP_LOGI(TAG, "Inicializando UART%d", uart_cfg.uarts[i].uart_num);
             uart_set_new_configure(&uart_cfg.uarts[i]);
+            
+
+            if(uart_cfg.uarts[i].tx_pin < 40) pin_initialized[uart_cfg.uarts[i].tx_pin] = true;
+            if(uart_cfg.uarts[i].rx_pin < 40) pin_initialized[uart_cfg.uarts[i].rx_pin] = true;
         }
     }
 
     /* ---------- GPIO ---------- */
     app_config_gpio_load(&gpio_cfg);
-
-    ESP_LOGI(TAG, "Configurações de GPIO carregadas: %d GPIO(s)", gpio_cfg.gpio_cnt);
+    ESP_LOGI(TAG, "GPIOs carregados: %d", gpio_cfg.gpio_cnt);
 
     for (uint8_t i = 0; i < GPIO_BOARD_MAX; i++)
     {
         if (gpio_cfg.gpios[i].state)
         {
-            ESP_LOGI(TAG, "Inicializando GPIO%d", gpio_pins[gpio_cfg.gpios[i].gpio_num]);
+            int pino_fisico = gpio_pins[gpio_cfg.gpios[i].gpio_num];
+
+            if (pino_fisico < 40 && pin_initialized[pino_fisico])
+            {
+                ESP_LOGW(TAG, "Ignorando GPIO%d duplicado (Configuração suja detectada)", pino_fisico);
+                continue;
+            }
+
+            ESP_LOGI(TAG, "Inicializando GPIO%d", pino_fisico);
             gpio_set_new_configure(&gpio_cfg.gpios[i]);
+            
+            if (pino_fisico < 40) pin_initialized[pino_fisico] = true;
         }
     }
     
     ESP_LOGI(TAG, "Configuracoes aplicadas com sucesso!");
-
     app_config_init_reset_btn();
 }
 

@@ -1,0 +1,34 @@
+erDiagram
+    Paciente ||--o{ Consulta : "realiza"
+    Medico ||--o{ Consulta : "atende"
+    Consulta ||--o{ Prescricao : "gera"
+
+    Paciente {
+        int id PK
+        string nome
+        date data_nascimento
+        string cpf UK
+        string telefone
+    }
+
+    Medico {
+        int id PK
+        string nome
+        string especialidade
+        string crm UK
+    }
+
+    Consulta {
+        int id PK
+        int id_paciente FK
+        int id_medico FK
+        date data_consulta
+        time hora_consulta
+    }
+
+    Prescricao {
+        int id PK
+        int id_consulta FK
+        string medicamento
+        string dosagem
+    }

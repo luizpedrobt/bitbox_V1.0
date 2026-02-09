@@ -4,6 +4,7 @@ import mmap
 import glob
 import argparse
 import shutil
+import sys
 
 # ========= CONFIGURAÇÕES DO PROTOCOLO =========
 HEADER_MAGIC = 0xDEADBEEF
@@ -25,37 +26,68 @@ UART_TXT_TS_FMT = "<Q"
 # ========= FUNÇÕES DE DECODE (TXT) =========
 
 def fmt_payload_uart(buf):
+    """Converte bytes para string ASCII amigável, escapando não-imprimíveis."""
     out = []
     for b in buf:
-        if b == 0: out.append("\\0")
-        elif 32 <= b <= 126: out.append(chr(b))
-        else: out.append(f"\\x{b:02X}")
+        if b == 0: out.append("\\0") # Representação visual do null
+        elif 32 <= b <= 126: out.append(chr(b)) # Caracteres ASCII imprimíveis
+        elif b == 10: out.append("\\n") # Newline
+        elif b == 13: out.append("\\r") # Carriage Return
+        else: out.append(f"\\x{b:02X}") # Hex para o resto
     return "".join(out)
 
 def decode_to_txt(input_dir, output_dir):
-    print(f"--- Iniciando conversão para TXT em '{output_dir}' ---")
+    print(f"\n--- Iniciando decodificação e impressão ---")
     bin_files = glob.glob(os.path.join(input_dir, "*.bin"))
+    bin_files.sort() # Ordena para ficar bonito no terminal
+
+    if not bin_files:
+        print("Nenhum arquivo binário intermediário encontrado para decodificar.")
+        return
 
     for bin_file in bin_files:
         filename = os.path.basename(bin_file)
         name_no_ext = os.path.splitext(filename)[0]
         txt_path = os.path.join(output_dir, name_no_ext + ".txt")
 
+        # Cabeçalho visual no terminal
+        print(f"\n{'='*60}")
+        print(f"ARQUIVO: {filename} -> {os.path.basename(txt_path)}")
+        print(f"{'='*60}")
+
         if filename.startswith("gpio"):
             # Lógica GPIO TXT
             with open(bin_file, "rb") as f_in, open(txt_path, "w") as f_out:
-                f_out.write("Timestamp (us) | Edge | Level\n" + "-"*35 + "\n")
+                header_line = "Timestamp (us) | Edge | Level"
+                sep_line = "-" * 40
+                
+                # Escreve header no arquivo e tela
+                f_out.write(header_line + "\n" + sep_line + "\n")
+                print(f"{header_line}\n{sep_line}")
+
                 idx = 0
                 while chunk := f_in.read(struct.calcsize(GPIO_TXT_FMT)):
                     ts, edge, level = struct.unpack(GPIO_TXT_FMT, chunk)
-                    f_out.write(f"[{idx:05d}] {ts:<12} | edge={edge} level={level}\n")
+                    
+                    # Formata a linha
+                    line_content = f"[{idx:05d}] {ts:<12} | edge={edge} level={level}"
+                    
+                    # Salva e Imprime
+                    f_out.write(line_content + "\n")
+                    print(line_content)
+                    
                     idx += 1
-            print(f"Gerado: {filename} -> .txt")
 
         elif filename.startswith("uart"):
             # Lógica UART TXT
             with open(bin_file, "rb") as f_in, open(txt_path, "w") as f_out:
-                f_out.write("Timestamp (us) | Payload\n" + "-"*35 + "\n")
+                header_line = "Timestamp (us) | Payload (ASCII)"
+                sep_line = "-" * 60
+                
+                # Escreve header no arquivo e tela
+                f_out.write(header_line + "\n" + sep_line + "\n")
+                print(f"{header_line}\n{sep_line}")
+
                 idx = 0
                 ts_size = struct.calcsize(UART_TXT_TS_FMT)
                 while True:
@@ -68,53 +100,62 @@ def decode_to_txt(input_dir, output_dir):
                         payload.append(byte[0])
                         if byte[0] == 0: break
                     
-                    f_out.write(f"[{idx:05d}] {ts:<12} | {fmt_payload_uart(payload)}\n")
+                    # Formata a linha
+                    decoded_str = fmt_payload_uart(payload)
+                    line_content = f"[{idx:05d}] {ts:<12} | {decoded_str}"
+                    
+                    # Salva e Imprime
+                    f_out.write(line_content + "\n")
+                    print(line_content)
+                    
                     idx += 1
-            print(f"Gerado: {filename} -> .txt")
+    print("\n--- Processamento concluído ---")
 
 # ========= PROCESSADOR PRINCIPAL (SPLITTER) =========
 
 def process_log(input_file, output_dir, keep_bins=True):
+    # Garante que o diretório de saída existe
     if not os.path.exists(output_dir):
+        print(f"Criando diretório de saída: {output_dir}")
         os.makedirs(output_dir)
 
-    print(f"Abrindo arquivo de log: {input_file}")
+    print(f"Lendo arquivo bruto: {input_file}")
     
-    # Dicionário para manter handles de arquivo abertos
     out_files = {}
 
     def get_file_handle(prefix, num):
         key = f"{prefix}{num}"
         if key not in out_files:
             path = os.path.join(output_dir, f"{key}.bin")
-            out_files[key] = open(path, "wb") # wb apaga o anterior
+            out_files[key] = open(path, "wb") 
         return out_files[key]
 
-    # Usando mmap para performance e economia de RAM
-    with open(input_file, "rb") as f:
-        # Se arquivo vazio, aborta
-        if os.path.getsize(input_file) == 0:
-            print("Arquivo vazio.")
-            return
+    try:
+        f = open(input_file, "rb")
+    except FileNotFoundError:
+        print(f"Erro: Arquivo '{input_file}' não encontrado.")
+        return
 
+    if os.path.getsize(input_file) == 0:
+        print("Arquivo vazio.")
+        f.close()
+        return
+
+    with f:
         with mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ) as mm:
             offset = 0
             total_size = len(mm)
             
             while offset + HDR_SIZE <= total_size:
-                # Otimização: Busca rápida pelo header magic
-                # Se não estiver alinhado, usa .find para pular lixo
                 check_magic = struct.unpack_from("<I", mm, offset)[0]
                 
                 if check_magic != HEADER_MAGIC:
-                    # Tenta achar o próximo magic byte a byte (lento) ou via find (rápido)
                     new_offset = mm.find(struct.pack("<I", HEADER_MAGIC), offset + 1)
                     if new_offset == -1:
-                        break # Fim dos dados válidos
+                        break 
                     offset = new_offset
                     continue
 
-                # Header válido encontrado
                 try:
                     _, time_us, log_type, periph = struct.unpack_from(HDR_FMT, mm, offset)
                 except:
@@ -128,8 +169,8 @@ def process_log(input_file, output_dir, keep_bins=True):
                     payload_len = struct.unpack_from(UART_LEN_FMT, mm, p)[0]
                     p += UART_LEN_SIZE
                     
-                    if payload_len > 1024 or p + payload_len > total_size:
-                        offset += 1 # Payload inválido, corrupção?
+                    if payload_len > 2048 or p + payload_len > total_size:
+                        offset += 1 
                         continue
                         
                     payload = mm[p : p + payload_len]
@@ -137,7 +178,7 @@ def process_log(input_file, output_dir, keep_bins=True):
                     f_out = get_file_handle("uart", periph)
                     f_out.write(struct.pack("<Q", time_us))
                     f_out.write(payload)
-                    f_out.write(b"\x00") # Null terminator pro decoder
+                    f_out.write(b"\x00") 
                     
                     offset = p + payload_len
 
@@ -152,19 +193,18 @@ def process_log(input_file, output_dir, keep_bins=True):
                     offset = p + GPIO_SIZE
                 
                 else:
-                    # Tipo desconhecido, avança 1 byte para tentar resincronizar
                     offset += 1
 
-    # Fecha todos os arquivos binários gerados
+    # Fecha arquivos binários
     for f_h in out_files.values():
         f_h.close()
     
-    print("Separação concluída.")
+    print(f"Separação binária concluída. Arquivos gerados em '{output_dir}/'")
     
-    # Chama o decoder para TXT
+    # Chama o decoder (que agora imprime na tela)
+    # Passamos o output_dir tanto como fonte dos bins quanto destino dos txts
     decode_to_txt(output_dir, output_dir)
 
-    # Limpeza (Opcional)
     if not keep_bins:
         print("Removendo binários temporários...")
         for k in out_files.keys():
@@ -174,10 +214,16 @@ def process_log(input_file, output_dir, keep_bins=True):
 # ========= ENTRY POINT =========
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="BitBox Log Processor")
-    parser.add_argument("logfile", help="Caminho do arquivo .BIN (ex: LOG12.BIN)")
-    parser.add_argument("--out", default="decoded_logs", help="Pasta de saída")
-    parser.add_argument("--clean", action="store_true", help="Apagar .bin intermediários, manter só .txt")
+    parser = argparse.ArgumentParser(description="BitBox Log Parser & Viewer")
+    
+    parser.add_argument("logfile", help="Caminho do arquivo .BIN bruto (ex: LOG12.BIN)")
+    
+    # Opção para definir diretório de saída
+    parser.add_argument("--out", default="logs_processados", 
+                        help="Diretório onde os arquivos TXT serão salvos (Padrão: logs_processados)")
+    
+    parser.add_argument("--clean", action="store_true", 
+                        help="Apagar arquivos .bin intermediários após gerar os .txt")
     
     args = parser.parse_args()
     

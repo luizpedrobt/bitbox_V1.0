@@ -8,21 +8,17 @@
 #include <inttypes.h>
 #include <stdbool.h>
 #include "esp_log_level.h"
-#include "sdkconfig.h"
 #include "freertos/FreeRTOS.h"
 #include "embled_app.h"
 #include "nvs_flash.h"
 #include "freertos/task.h"
 #include "esp_log.h"
-#include "esp_pm.h"
-#include "esp_system.h"
 
 #include "sdmmc_storage.h"
 #include "uart_periph.h"
 #include "gpio_peripheral.h"
 #include "wifi_conn.h"
 #include "mqtt_app.h"
-#include "sd_log.h"
 
 #include "app_config.h"
 
@@ -44,6 +40,10 @@ static void app_init_periph(void)
     esp_log_level_set("*", ESP_LOG_NONE);
     esp_log_level_set(TAG, ESP_LOG_INFO);
 
+    esp_err_t ret = nvs_flash_init();
+    ESP_ERROR_CHECK(ret);
+
+    gpio_install_isr_service(ESP_INTR_FLAG_IRAM);
     embled_app_main();
     sdmmc_initialized = sdmmc_stor_init();
 
@@ -60,11 +60,6 @@ static void app_init_periph(void)
 
     uart_periph_initialized = uart_periph_driver_init();
     gpio_periph_main();
-
-    esp_err_t ret = nvs_flash_init();
-    ESP_ERROR_CHECK(ret);
-
-    gpio_install_isr_service(ESP_INTR_FLAG_IRAM);
 
     app_config_main();
 }

@@ -1,0 +1,18 @@
+flowchart TD
+
+A[Data Format]
+
+A --> B[Fixed Length]
+A --> C[Variable Length\nStrings / Blob Data]
+
+B --> D[Primitive Types\nData 8]
+B --> E[Blob Index]
+
+E --> F[Size 4]
+E --> G[ChunkCount ]
+E --> H[ChunkStart 1]
+E --> I[Rsv 2]
+
+C --> J[Size 2]
+C --> K[Rsv 2]
+C --> L[CRC32 4]

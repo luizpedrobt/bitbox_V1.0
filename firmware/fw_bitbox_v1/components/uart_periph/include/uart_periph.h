@@ -14,7 +14,8 @@ typedef struct uart_cfg_s
     int tx_pin;
     int baudrate;
     bool state; // false = disable | true = enable
-}uart_cfg_t;
+    uint8_t terminator_char;
+} uart_cfg_t;
 
 extern QueueHandle_t uart_queue[UART_NUM_MAX];
 

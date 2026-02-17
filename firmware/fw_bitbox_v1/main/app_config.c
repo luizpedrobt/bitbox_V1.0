@@ -1,5 +1,4 @@
 #include <stdint.h>
-#include <stdlib.h>
 #include "esp_attr.h"
 #include "esp_log.h"
 #include "esp_system.h"
@@ -10,7 +9,6 @@
 #include "nvs.h"
 #include "uart_periph.h"
 #include "gpio_peripheral.h"
-#include "nvs_flash.h"
 #include "esp_err.h"
 #include "portmacro.h"
 
@@ -349,7 +347,8 @@ void app_config_main(void)
             ESP_LOGI(TAG, "Inicializando GPIO%d", pino_fisico);
             gpio_set_new_configure(&gpio_cfg.gpios[i]);
             
-            if (pino_fisico < 40) pin_initialized[pino_fisico] = true;
+            if (pino_fisico < 40) 
+                pin_initialized[pino_fisico] = true;
         }
     }
     

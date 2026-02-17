@@ -27,12 +27,12 @@
 gpio:
   - gpio: 3
     state: 1
-    mode: OUTPUT
-    intr: DISABLE
-    pullup: DISABLE
+    mode: INPUT
+    intr: ANYEDGE
+    pullup: ENABLE
     pulldown: DISABLE
 
-  - gpio: 35
+  - gpio: 4
     state: 1
     mode: INPUT
     intr: ANYEDGE
@@ -40,14 +40,14 @@ gpio:
     pulldown: ENABLE
 
   - gpio: 36
-    state: 1
+    state: 0
     mode: OUTPUT
     intr: DISABLE
     pullup: DISABLE
     pulldown: DISABLE
 
   - gpio: 37
-    state: 1
+    state: 0
     mode: INPUT
     intr: ANYEDGE
     pullup: DISABLE
@@ -56,18 +56,18 @@ gpio:
 uart:
   - uart_num: 0
     state: 0
-    rx_gpio: 1
-    tx_gpio: 2
+    rx_gpio: 5
+    tx_gpio: 35
     baudrate: 115200
 
   - uart_num: 1
-    state: 0
-    rx_gpio: 3
-    tx_gpio: 4
+    state: 1
+    rx_gpio: 1
+    tx_gpio: 33
     baudrate: 115200
 
   - uart_num: 2
     state: 1
-    rx_gpio: 5
-    tx_gpio: 33
+    rx_gpio: 2
+    tx_gpio: 34
     baudrate: 115200

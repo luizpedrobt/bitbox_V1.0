@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <assert.h>
 #include "esp_system.h"
 #include "freertos/idf_additions.h"
 #include "freertos/FreeRTOS.h"
@@ -20,6 +21,9 @@
 #include "uart_periph.h"
 #include "gpio_peripheral.h"
 #include "sd_log.h"
+
+#include "utl_crc16.h"
+#include "utl_cobs.h"
 
 #include "portmacro.h"
 #include "utl_cbf.h"
@@ -41,12 +45,22 @@ static utl_cbf_t *uart_circ_buffers[UART_NUM_MAX] =
     &uart2_cbf
 };
 
+static uint8_t uart_terminator_char[UART_NUM_MAX] = { 0 };
+
+static portMUX_TYPE uart_mux[UART_NUM_MAX] = 
+{
+    portMUX_INITIALIZER_UNLOCKED,
+    portMUX_INITIALIZER_UNLOCKED,
+    portMUX_INITIALIZER_UNLOCKED
+};
+
 bool uart_installeds[UART_NUM_MAX] =
 {
     false, false, false,
 };
 
 static TaskHandle_t uart_task_handlers[UART_NUM_MAX] = { NULL, NULL, NULL };
+static TaskHandle_t uart_record_handlers[UART_NUM_MAX] = { NULL, NULL, NULL };
 
 QueueHandle_t uart_queue[UART_NUM_MAX];
 
@@ -67,7 +81,7 @@ void uart_set_new_configure(uart_cfg_t *cfg)
     uart_config_save_update(cfg);
     uart_apply_config(cfg);
 
-    xTaskCreate(uart_record_data_task, "record_data_task", 8192, (void *)cfg->uart_num, 1, NULL);
+    xTaskCreate(uart_record_data_task, "record_data_task", 8192, (void *)cfg->uart_num, 1, &uart_record_handlers[cfg->uart_num]);
 }
 
 /* --------- STATIC FUNCTIONS SOURCES ------------*/
@@ -75,43 +89,61 @@ void uart_set_new_configure(uart_cfg_t *cfg)
 static void uart_periph_driver_task(void *arg)
 {
     int uart_num = (int)arg;
-    ESP_LOGI(TAG, "TASK da UART%d iniciada!", uart_num);
 
     uart_event_t event;
-    uint8_t data[2048];
-    uint32_t written = 0;
+    uint8_t *dtmp = (uint8_t *)pvPortMalloc(4092);
+    assert(dtmp);
 
     while (1)
     {
-        if(xQueueReceive(uart_queue[uart_num], &event, pdMS_TO_TICKS(10)))
+        if (xQueueReceive(uart_queue[uart_num], &event, portMAX_DELAY))
         {
-            switch (event.type)
+            if (event.type == UART_DATA)
             {
-                case UART_DATA:
-                    int len = uart_read_bytes(uart_num, data, event.size, pdMS_TO_TICKS(100));
-                    if(len > 0)
+                uint32_t len = uart_read_bytes(uart_num, dtmp, event.size, portMAX_DELAY);
+                ESP_LOGI(TAG, "UART%D: len -> %d | event.size -> %d", uart_num, len, event.size);
+                ESP_LOG_BUFFER_HEX_LEVEL(TAG, dtmp, event.size, ESP_LOG_WARN);
+
+                if (len > 0)
+                {
+                    for (uint32_t i = 0; i < len; i++)
                     {
-                        utl_cbf_put_n(uart_circ_buffers[uart_num], data, len, &written);
-
-                        ESP_LOGI(TAG, "TASK UART%d: <- %d bytes armazenados no buffer circular!", uart_num, event.size);
+                        if (utl_cbf_put(uart_circ_buffers[uart_num], dtmp[i]) == UTL_CBF_FULL)
+                        {
+                            ESP_LOGW(TAG, "UART%d CBF FULL", uart_num);
+                            break;
+                        }
                     }
-                    
-                    break;
 
-                case UART_FIFO_OVF:
-                case UART_BUFFER_FULL:
-                    uart_flush_input(uart_num);
-                    xQueueReset(uart_queue[uart_num]);
-                    ESP_LOGW(TAG, "UART%d Buffer Full/Overflow", uart_num);
-                
-                    break;
-                
-                default:
-                    break;
+                    if (uart_record_handlers[uart_num] != NULL)
+                    {
+                        xTaskNotifyGive(uart_record_handlers[uart_num]);
+                    }
+                }
+            }
+            else if (event.type == UART_FIFO_OVF || event.type == UART_BUFFER_FULL)
+            {
+                uart_flush_input(uart_num);
+                xQueueReset(uart_queue[uart_num]);
+                ESP_LOGW(TAG, "UART%d Overflow", uart_num);
             }
         }
+
+        if(!uart_installeds[uart_num])
+        {
+            ESP_LOGW(TAG, "Matando driver_task da UART%d!", uart_num);
+            break;
+        }
+        
     }
+    
+    vPortFree(dtmp);
+
+    uart_task_handlers[uart_num] = NULL;
+    vTaskDelete(NULL);
+
 }
+
 
 static void process_uart_packet(uart_port_t uart_num, sd_log_msg_t *ctx)
 {
@@ -134,30 +166,31 @@ static void uart_record_data_task(void *arg)
 {
     uart_port_t uart_num = (uart_port_t)arg;
 
-    sd_log_msg_t *ctx = (sd_log_msg_t *)malloc(sizeof(sd_log_msg_t));
-    if (ctx == NULL) 
+    sd_log_msg_t *ctx = pvPortMalloc(sizeof(sd_log_msg_t));
+    uint8_t *encoded_buf = pvPortMalloc(UART_MAX_PAYLOAD_LEN + (UART_MAX_PAYLOAD_LEN / 254) + 2);
+
+    if (!ctx || !encoded_buf)
     {
-        ESP_LOGE(TAG, "Falha de memoria na UART%d", uart_num);
+        ESP_LOGE(TAG, "Memoria insuficiente UART%d", uart_num);
         vTaskDelete(NULL);
     }
 
     memset(ctx, 0, sizeof(sd_log_msg_t));
-
-    static uint8_t uart_byte;
+    uint8_t uart_byte;
 
     while (1)
     {
-        int processed = 0;
+        ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
 
-        while (utl_cbf_bytes_available(uart_circ_buffers[uart_num]) && processed < UART_PARSE_BUDGET)
+        while (utl_cbf_bytes_available(uart_circ_buffers[uart_num]))
         {
             utl_cbf_get(uart_circ_buffers[uart_num], &uart_byte);
-            processed++;
 
-            if (uart_byte == 0x00)
+            ESP_LOGI(TAG, "Byte: %04X", uart_byte);
+
+            if (uart_byte == uart_terminator_char[uart_num])
             {
-                ESP_LOGI(TAG, "\\0 detectado. %d bytes. UART%d", ctx->uart.payload_len, uart_num);
-
+                ESP_LOGI(TAG, "Terminador da UART%d: %d encontrado!", uart_num, uart_terminator_char[uart_num]);
                 process_uart_packet(uart_num, ctx);
             }
 
@@ -167,20 +200,28 @@ static void uart_record_data_task(void *arg)
                 {
                     ctx->uart.payload[ctx->uart.payload_len++] = uart_byte;
                 }
-
                 else
                 {
-                    ESP_LOGW(TAG, "Buffer cheio. Resetando frame.");
+                    ESP_LOGE(TAG, "Buffer Overflow UART%d. Resetando.", uart_num);
                     ctx->uart.payload_len = 0;
                 }
             }
         }
-        taskYIELD();
+
+        if(!uart_installeds[uart_num])
+        {
+            ESP_LOGW(TAG, "Matando record_task da UART%d!", uart_num);
+            break;
+        }
     }
-    
-    free(ctx);
+
+    vPortFree(ctx);
+    vPortFree(encoded_buf);
+
+    uart_task_handlers[uart_num] = NULL;
     vTaskDelete(NULL);
 }
+
 
 static void uart_config_save_update(const uart_cfg_t *cfg)
 {
@@ -227,7 +268,6 @@ static void uart_apply_config(const uart_cfg_t *cfg)
     if (uart_installeds[cfg->uart_num])
     {
         ESP_LOGW(TAG, "UART%d já instalada", cfg->uart_num);
-
         return;
     }
 
@@ -238,11 +278,18 @@ static void uart_apply_config(const uart_cfg_t *cfg)
         .stop_bits = UART_STOP_BITS_1,
         .parity    = UART_PARITY_DISABLE,
         .flow_ctrl = UART_HW_FLOWCTRL_DISABLE,
+        // .source_clk = UART_SCLK_APB, // JAMAIS USAR ESSA MERDA COM ESP_PM !!!!
+        .source_clk = UART_SCLK_XTAL,
+        .rx_flow_ctrl_thresh = 122,
     };
+
+    uart_terminator_char[cfg->uart_num] = cfg->terminator_char;
 
     uart_param_config(cfg->uart_num, &uart_config);
     uart_set_pin(cfg->uart_num, cfg->tx_pin, cfg->rx_pin, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
-    uart_driver_install(cfg->uart_num, 8192, 0, 20, &uart_queue[cfg->uart_num], 0);
+
+    uart_driver_install(cfg->uart_num, 8192, 0, 20, &uart_queue[cfg->uart_num], ESP_INTR_FLAG_SHARED);
+    gpio_set_pull_mode(cfg->rx_pin, GPIO_PULLUP_ONLY);
                         
     xTaskCreate(uart_periph_driver_task, "uart_rx_task",8192, (void *)cfg->uart_num, 10, &uart_task_handlers[cfg->uart_num]);
 

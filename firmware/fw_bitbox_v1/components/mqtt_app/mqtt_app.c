@@ -395,7 +395,7 @@ bool mqtt_publish_msg(const sd_log_msg_t *msg)
 
         /* ================= GPIO ================= */
         case SD_LOG_GPIO:
-        {
+        { 
             snprintf(topic, sizeof(topic), "datalogger/gpio/%d" , msg->log_header.periph_num);
 
             uint8_t *p = payload;

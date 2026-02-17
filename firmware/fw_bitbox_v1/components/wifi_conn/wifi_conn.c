@@ -84,23 +84,24 @@ static const char *html_gpio_page =
 "<title>Hardware Config</title>"
 "<style>"
 ":root { --bg: #0f172a; --card: #1e293b; --text: #f1f5f9; --primary: #10b981; --border: #334155; }"
-"body { font-family: sans-serif; background: var(--bg); color: var(--text); padding: 10px; display:flex; justify-content:center; }"
-".card { background: var(--card); border-radius: 12px; padding: 15px; width: 100%; max-width: 500px; border: 1px solid var(--border); box-sizing: border-box; }"
-"h2 { text-align: center; border-bottom: 1px solid var(--border); padding-bottom: 10px; margin-top:0; font-size: 1.2rem; }"
-/* Estilos Gerais de Linha */
-".row { background: #0f172a; border-radius: 6px; padding: 8px; margin-bottom: 8px; border: 1px solid #334155; }"
-".row.disabled { opacity: 0.3; pointer-events: none; }"
-/* Layout Flex */
-".flex-line { display: flex; gap: 5px; align-items: center; margin-bottom: 4px; }"
+"* { box-sizing: border-box; margin: 0; padding: 0; }"
+"body { font-family: sans-serif; background: var(--bg); color: var(--text); padding: 20px; display:flex; justify-content:center; min-height: 100vh; }"
+".card { background: var(--card); border-radius: 12px; padding: 25px; width: 100%; max-width: 600px; border: 1px solid var(--border); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); height: fit-content; }"
+"h2 { text-align: center; border-bottom: 1px solid var(--border); padding-bottom: 15px; margin-bottom: 20px; font-size: 1.4rem; color: var(--primary); }"
+".row { background: #0f172a; border-radius: 8px; padding: 12px; margin-bottom: 12px; border: 1px solid #334155; }"
+".row.disabled { opacity: 0.5; pointer-events: none; filter: grayscale(1); }"
+".flex-line { display: flex; gap: 10px; align-items: flex-end; margin-bottom: 10px; flex-wrap: wrap; }"
 ".flex-line:last-child { margin-bottom: 0; }"
-/* Labels e Inputs */
-"label { font-size: 0.7rem; color: #cbd5f5; font-weight: bold; margin-right: 4px; }"
-"select, input { flex: 1; padding: 6px; background: #1e293b; color: white; border: 1px solid var(--border); border-radius: 4px; font-size: 0.8rem; min-width: 0; }"
-"button { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 15px; }"
-".sec-title { margin: 20px 0 8px 0; color: var(--primary); font-size: 0.9rem; text-transform: uppercase; font-weight:bold; border-bottom: 1px solid #334155; }"
-"input[type='checkbox'] { width: 18px; height: 18px; flex: 0 0 18px; cursor: pointer; accent-color: var(--primary); }"
-".grp { display: flex; flex-direction: column; flex: 1; }" /* Agrupa Label + Input verticalmente */
-".grp-l { margin-bottom: 2px; }"
+"label { font-size: 0.8rem; color: #cbd5f5; font-weight: 600; margin-bottom: 5px; display: block; }"
+"select, input { width: 100%; padding: 10px; background: #1e293b; color: white; border: 1px solid var(--border); border-radius: 6px; font-size: 0.9rem; }"
+"select:focus, input:focus { outline: none; border-color: var(--primary); }"
+"button { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 25px; font-size: 1rem; transition: opacity 0.2s; }"
+"button:hover { opacity: 0.9; }"
+".sec-title { margin: 30px 0 10px 0; color: var(--primary); font-size: 0.9rem; text-transform: uppercase; font-weight:bold; border-bottom: 1px solid #334155; padding-bottom: 5px; }"
+".chk-head { display: flex; align-items: center; margin-bottom: 8px; margin-top: 15px; cursor: pointer; }"
+"input[type='checkbox'] { width: 18px; height: 18px; margin-right: 10px; accent-color: var(--primary); cursor: pointer; display: inline-block; }"
+".chk-label { margin: 0; cursor: pointer; font-size: 0.95rem; font-weight: normal; }"
+".grp { flex: 1; min-width: 120px; }"
 "</style>"
 "</head>"
 "<body>"
@@ -129,14 +130,22 @@ static const char *html_gpio_page =
 /* GERAÇÃO UART */
 "const u_cont = document.getElementById('u_cont');"
 "for(let i=0; i<3; i++) {"
-"  let h = `<div style='display:flex; align-items:center; margin-bottom:2px; margin-top:8px;'>`;"
+"  let h = `<div class='chk-head'>`;"
 "  h += `<input type='checkbox' name='u_en_${i}' id='u_en_${i}' onchange='toggle(${i}, \"u\")'>`;"
-"  h += `<label style='margin-left:8px; color:white; font-size:0.9rem;'>UART ${i}</label></div>`;"
+"  h += `<label for='u_en_${i}' class='chk-label'>Habilitar UART ${i}</label></div>`;"
 "  h += `<div class='row disabled' id='u_row_${i}'>`;"
 "  h += `<div class='flex-line'>`;"
-"  h += `<div class='grp' style='flex:0.6'><span class='grp-l label'>Baud</span><input type='number' name='u_baud_${i}' value='115200'></div>`;"
-"  h += `<div class='grp'><span class='grp-l label'>TX Pin</span><input type='number' name='u_tx_${i}' placeholder='IO'></div>`;"
-"  h += `<div class='grp'><span class='grp-l label'>RX Pin</span><input type='number' name='u_rx_${i}' placeholder='IO'></div>`;"
+"  h += `<div class='grp' style='flex:1.5'><label>Baudrate</label><input type='number' name='u_baud_${i}' value='115200'></div>`;"
+"  h += `<div class='grp'><label>Terminador</label>`;"
+"  h += `<select name='u_term_${i}'>`;"
+"  h += `<option value='10'>LF (\\n)</option>`;"
+"  h += `<option value='13'>CR (\\r)</option>`;"
+"  h += `<option value='0'>NULL (\\0)</option>`;"
+"  h += `</select></div>`;"
+"  h += `</div>`;"
+"  h += `<div class='flex-line'>`;"
+"  h += `<div class='grp'><label>TX Pin</label><input type='number' name='u_tx_${i}' placeholder='IO'></div>`;"
+"  h += `<div class='grp'><label>RX Pin</label><input type='number' name='u_rx_${i}' placeholder='IO'></div>`;"
 "  h += `</div></div>`;"
 "  u_cont.innerHTML += h;"
 "}"
@@ -145,21 +154,19 @@ static const char *html_gpio_page =
 "const p = ['BOARD_1','BOARD_2','BOARD_3','BOARD_4','BOARD_5','BOARD_33','BOARD_34','BOARD_35','BOARD_36','BOARD_37'];"
 "const g_cont = document.getElementById('g_cont');"
 "p.forEach((n, i) => {"
-"  let h = `<div style='display:flex; align-items:center; margin-bottom:2px; margin-top:10px;'>`;"
+"  let h = `<div class='chk-head'>`;"
 "  h += `<input type='checkbox' name='g_en_${i}' id='g_en_${i}' onchange='toggle(${i}, \"g\")'>`;"
-"  h += `<label style='margin-left:8px; color:white; font-size:0.9rem;'>${n}</label></div>`;"
+"  h += `<label for='g_en_${i}' class='chk-label'>${n}</label></div>`;"
 "  h += `<div class='row disabled' id='g_row_${i}'>`;"
-   /* Linha 1: Mode e Interrupt */
 "  h += `<div class='flex-line'>`;"
-"  h += `<div class='grp'><span class='grp-l label'>Mode</span><select name='m_${i}'>`;"
+"  h += `<div class='grp'><label>Mode</label><select name='m_${i}'>`;"
 "  h += `<option value='0'>DISABLE</option><option value='1'>INPUT</option><option value='2'>OUTPUT</option><option value='3'>IN_OUT</option></select></div>`;"
-"  h += `<div class='grp'><span class='grp-l label'>Intr</span><select name='int_${i}'>`;"
+"  h += `<div class='grp'><label>Interrupt</label><select name='int_${i}'>`;"
 "  h += `<option value='0'>DISABLE</option><option value='1'>POSEDGE</option><option value='2'>NEGEDGE</option><option value='3'>ANYEDGE</option><option value='4'>LOW</option><option value='5'>HIGH</option></select></div>`;"
 "  h += `</div>`;"
-   /* Linha 2: Pull Up e Pull Down */
 "  h += `<div class='flex-line'>`;"
-"  h += `<div class='grp'><span class='grp-l label'>Pull Up</span><select name='pu_${i}'><option value='0'>DISABLE</option><option value='1'>ENABLE</option></select></div>`;"
-"  h += `<div class='grp'><span class='grp-l label'>Pull Down</span><select name='pd_${i}'><option value='0'>DISABLE</option><option value='1'>ENABLE</option></select></div>`;"
+"  h += `<div class='grp'><label>Pull Up</label><select name='pu_${i}'><option value='0'>DISABLE</option><option value='1'>ENABLE</option></select></div>`;"
+"  h += `<div class='grp'><label>Pull Down</label><select name='pd_${i}'><option value='0'>DISABLE</option><option value='1'>ENABLE</option></select></div>`;"
 "  h += `</div></div>`;"
 "  g_cont.innerHTML += h;"
 "});"
@@ -175,53 +182,61 @@ static const char *html_page =
 "<meta name='viewport' content='width=device-width, initial-scale=1.0'>"
 "<title>Datalogger Setup</title>"
 "<style>"
-"body { font-family: Arial, sans-serif; background: #0f172a; color: #e5e7eb; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }"
-".card { background: #020617; border-radius: 14px; padding: 26px 28px; width: 100%; max-width: 400px; box-shadow: 0 10px 30px rgba(0,0,0,0.6); }"
-"h2 { margin: 0 0 18px 0; text-align: center; font-weight: 600; }"
-"label { font-size: 0.85rem; color: #cbd5f5; }"
-"input, select { width: 100%; padding: 11px 12px; margin-top: 6px; margin-bottom: 14px; border-radius: 8px; border: 1px solid #1e293b; background: #020617; color: #e5e7eb; box-sizing: border-box; }"
-"input:focus, select:focus { outline: none; border-color: #38bdf8; }"
-/* Checkbox Customizado */
-".chk-container { display: flex; align-items: center; margin-bottom: 15px; background: #1e293b; padding: 10px; border-radius: 8px; border: 1px solid #334155; }"
-"input[type='checkbox'] { width: 20px; height: 20px; margin: 0 10px 0 0; cursor: pointer; accent-color: #10b981; }"
-".chk-label { font-size: 0.9rem; font-weight: bold; color: white; cursor: pointer; }"
-"button { width: 100%; padding: 12px; border: none; border-radius: 10px; background: #0284c7; color: white; font-size: 1rem; font-weight: 600; cursor: pointer; }"
-".disabled-area { opacity: 0.3; pointer-events: none; transition: opacity 0.3s; }"
-".footer { margin-top: 14px; font-size: 0.75rem; color: #64748b; text-align: center; }"
+/* Mesmo CSS do Hardware Config */
+":root { --bg: #0f172a; --card: #1e293b; --text: #f1f5f9; --primary: #0284c7; --border: #334155; }" /* Primary Azul para diferenciar sutilmente */
+"* { box-sizing: border-box; margin: 0; padding: 0; }"
+"body { font-family: sans-serif; background: var(--bg); color: var(--text); padding: 20px; display:flex; justify-content:center; align-items:center; min-height: 100vh; }"
+".card { background: var(--card); border-radius: 12px; padding: 25px; width: 100%; max-width: 400px; border: 1px solid var(--border); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }"
+"h2 { text-align: center; border-bottom: 1px solid var(--border); padding-bottom: 15px; margin-bottom: 20px; font-size: 1.4rem; color: var(--primary); }"
+"label { font-size: 0.85rem; color: #cbd5f5; font-weight: 600; margin-bottom: 6px; display: block; margin-top: 15px; }"
+"select, input[type='text'], input[type='password'] { width: 100%; padding: 11px; background: #0f172a; color: white; border: 1px solid var(--border); border-radius: 6px; font-size: 0.95rem; }"
+"select:focus, input:focus { outline: none; border-color: var(--primary); }"
+"button { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 25px; font-size: 1rem; transition: opacity 0.2s; }"
+"button:hover { opacity: 0.9; }"
+/* Checkbox Area Style */
+".offline-box { background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); padding: 12px; border-radius: 8px; margin-bottom: 20px; display: flex; align-items: center; cursor: pointer; }"
+"input[type='checkbox'] { width: 20px; height: 20px; margin-right: 12px; accent-color: #10b981; cursor: pointer; }"
+".chk-label { margin: 0; color: #10b981; font-size: 0.95rem; cursor: pointer; font-weight: bold; }"
+/* Disabled State */
+".wifi-area { transition: opacity 0.3s, filter 0.3s; }"
+".wifi-area.disabled { opacity: 0.4; pointer-events: none; filter: grayscale(1); }"
 ".hidden { display: none; }"
-".spinner { width: 42px; height: 42px; border: 4px solid #1e293b; border-top: 4px solid #38bdf8; border-radius: 50%; animation: spin 1s linear infinite; margin: 20px auto; }"
+".spinner { width: 36px; height: 36px; border: 4px solid var(--card); border-top: 4px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; margin: 20px auto; }"
 "@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }"
+".btn-refresh { background: #334155; width: auto; margin-top: 0; padding: 0 15px; font-size: 1.2rem; }"
+".flex-row { display: flex; gap: 8px; }"
 "</style>"
 "</head>"
 "<body>"
+
 "<div class='card' id='formCard'>"
-"<h2>Datalogger Setup</h2>"
+"<h2>Wi-Fi Setup</h2>"
 "<form method='POST' action='/save' onsubmit='showLoading()'>"
 
-"<div class='chk-container'>"
-"<input type='checkbox' name='offline' id='offline' value='1' onchange='toggleWifi()'>"
-"<label for='offline' class='chk-label'>Modo Offline (Sem Wi-Fi)</label>"
+"<div class='offline-box' onclick='document.getElementById(\"offline\").click()'>"
+"<input type='checkbox' name='offline' id='offline' value='1' onchange='toggleWifi(); event.stopPropagation();'>"
+"<label for='offline' class='chk-label' onclick='event.stopPropagation()'>Modo Offline (Sem Wi-Fi)</label>"
 "</div>"
 
-"<div id='wifi-area'>"
-"<label>SSID</label>"
-"<select name='ssid' id='ssid'>"
-"<option value='' disabled selected>Carregando redes...</option>"
-"</select>"
-"<button type='button' onclick='loadNetworks()' style='margin-bottom:14px; background:#1e293b; font-size:0.8rem; padding:8px;'>↻ Atualizar Lista</button>"
+"<div id='wifi-area' class='wifi-area'>"
+"<label>Rede Wi-Fi (SSID)</label>"
+"<div class='flex-row'>"
+"<select name='ssid' id='ssid' style='flex:1;'><option disabled selected>Escaneando...</option></select>"
+"<button type='button' class='btn-refresh' onclick='loadNetworks()' title='Atualizar Lista'>↻</button>"
+"</div>"
+
 "<label>Senha</label>"
-"<input name='pass' type='password' placeholder='Senha do Wi-Fi'>"
+"<input name='pass' type='password' placeholder='Digite a senha da rede'>"
 "</div>"
 
-"<button type='submit'>Salvar Configuração</button>"
+"<button type='submit'>Salvar e Reiniciar</button>"
 "</form>"
-"<div class='footer'>Firmware Config Portal</div>"
 "</div>"
 
 "<div class='card hidden' id='loadingCard'>"
-"<h2>Configurando...</h2>"
+"<h2 style='border:none; margin-bottom:0;'>Configurando...</h2>"
 "<div class='spinner'></div>"
-"<p style='text-align:center;font-size:0.9rem;color:#cbd5f5;'>Salvando e reiniciando...</p>"
+"<p style='text-align:center; color:#94a3b8; font-size:0.9rem;'>O dispositivo irá reiniciar em breve.</p>"
 "</div>"
 
 "<script>"
@@ -229,12 +244,12 @@ static const char *html_page =
 "function toggleWifi() {"
 "  var chk = document.getElementById('offline');"
 "  var area = document.getElementById('wifi-area');"
-"  if(chk.checked) area.classList.add('disabled-area');"
-"  else area.classList.remove('disabled-area');"
+"  if(chk.checked) area.classList.add('disabled');"
+"  else area.classList.remove('disabled');"
 "}"
 "function loadNetworks() {"
 "  var s = document.getElementById('ssid');"
-"  s.innerHTML = '<option disabled selected>Escaneando...</option>';"
+"  s.innerHTML = '<option disabled selected>Atualizando...</option>';"
 "  fetch('/scan').then(r => r.json()).then(data => {"
 "    s.innerHTML = '';"
 "    if(data.length === 0) s.innerHTML = '<option disabled>Nenhuma rede encontrada</option>';"
@@ -405,13 +420,23 @@ static void url_decode_inplace(char *str)
     {
         if ((*src == '%') && ((a = src[1]) && (b = src[2])) && (isxdigit((int)a) && isxdigit((int)b))) 
         {
-            if (a >= 'a') a -= 'a'-'A';
-            if (a >= 'A') a -= ('A' - 10);
-            else a -= '0';
+            if (a >= 'a') 
+                a -= 'a'-'A';
+
+            if (a >= 'A')   
+                a -= ('A' - 10);
+
+            else 
+                a -= '0';
             
-            if (b >= 'a') b -= 'a'-'A';
-            if (b >= 'A') b -= ('A' - 10);
-            else b -= '0';
+            if (b >= 'a') 
+                b -= 'a'-'A';
+
+            if (b >= 'A') 
+                b -= ('A' - 10);
+
+            else 
+                b -= '0';
             
             *dst++ = 16 * a + b;
             src += 3;
@@ -493,16 +518,32 @@ static esp_err_t save_gpio_handler(httpd_req_t *req)
             sys_uart.uarts[active_uart_count].state = true; 
             
             snprintf(key, sizeof(key), "u_baud_%d", i);
-            if (httpd_query_key_value(buf, key, val, sizeof(val)) == ESP_OK) 
+            if (httpd_query_key_value(buf, key, val, sizeof(val)) == ESP_OK)
+            {
                 sys_uart.uarts[active_uart_count].baudrate = atoi(val);
+            }
+
+            snprintf(key, sizeof(key), "u_term_%d", i);
+            if (httpd_query_key_value(buf, key, val, sizeof(val)) == ESP_OK) 
+            {
+                sys_uart.uarts[active_uart_count].terminator_char = (uint8_t)atoi(val);
+            }
+            else
+            {
+                sys_uart.uarts[active_uart_count].terminator_char = 0x0A;
+            }
 
             snprintf(key, sizeof(key), "u_tx_%d", i);
             if (httpd_query_key_value(buf, key, val, sizeof(val)) == ESP_OK) 
+            {
                 sys_uart.uarts[active_uart_count].tx_pin = atoi(val);
+            }
 
             snprintf(key, sizeof(key), "u_rx_%d", i);
             if (httpd_query_key_value(buf, key, val, sizeof(val)) == ESP_OK) 
+            {
                 sys_uart.uarts[active_uart_count].rx_pin = atoi(val);
+            }
 
             active_uart_count++;
         }

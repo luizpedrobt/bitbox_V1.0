@@ -24,27 +24,27 @@ Este documento detalha a operação, configuração, protocolos de comunicação
 ### 1.1. Mapeamento de GPIOs
 O firmware abstrai os pinos físicos do ESP32 através de "Índices Lógicos" (0 a 9) para facilitar a configuração remota.
 
-| Índice Lógico | Pino Físico (ESP32) | Label na Placa |
-| :---: | :---: | :--- | 
-| **0** | GPIO 1 | BOARD_1 | 
-| **1** | GPIO 2 | BOARD_2 |
-| **2** | GPIO 3 | BOARD_3 |
-| **3** | GPIO 4 | BOARD_4 |
-| **4** | GPIO 5 | BOARD_5 |
-| **5** | GPIO 33 | BOARD_33 |
-| **6** | GPIO 34 | BOARD_34 |
-| **7** | GPIO 35 | BOARD_35 |
-| **8** | GPIO 36 | BOARD_36 |
-| **9** | GPIO 37 | BOARD_37 |
+| Índice Lógico | Pino Físico (ESP32) / Label na Placa |
+| :---: | :---: | 
+| **0** | GPIO 1 | 
+| **1** | GPIO 2 | 
+| **2** | GPIO 3 | 
+| **3** | GPIO 4 | 
+| **4** | GPIO 5 | 
+| **5** | GPIO 33 | 
+| **6** | GPIO 34 | 
+| **7** | GPIO 35 | 
+| **8** | GPIO 36 | 
+| **9** | GPIO 37 | 
 
 ### 1.2. Botões de Sistema
 Interrupções (ISR) configuradas com Debounce e proteção `IRAM_ATTR`.
 
-| GPIO | Função | Comportamento |
-| :--- | :--- | :--- |
-| **41** | **Setup WiFi** | Pressionar no boot ou runtime para abrir Portal WiFi. |
-| **42** | **Setup Hardware** | Pressionar no boot ou runtime para abrir Portal de Hardware. |
-| **0** | **Factory Reset** | Segurar por **3 segundos** para apagar NVS e reiniciar. |
+| GPIO | Label na Placa | Função | Comportamento |
+| :--- | :--- | :--- | :--- |
+| **41** | SW4 | **Setup WiFi** | Pressionar no boot ou runtime para abrir Portal WiFi. |
+| **42** | SW5 | **Setup Hardware** | Pressionar no boot ou runtime para abrir Portal de Hardware. |
+| **0** | SW3 | **Reset/Factory Reset** | Pressionamento curto para resetar. Segurar por **3 segundos** para apagar NVS e reiniciar. |
 
 ---
 

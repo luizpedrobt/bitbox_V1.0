@@ -101,8 +101,6 @@ static void uart_periph_driver_task(void *arg)
             if (event.type == UART_DATA)
             {
                 uint32_t len = uart_read_bytes(uart_num, dtmp, event.size, portMAX_DELAY);
-                ESP_LOGI(TAG, "UART%D: len -> %d | event.size -> %d", uart_num, len, event.size);
-                ESP_LOG_BUFFER_HEX_LEVEL(TAG, dtmp, event.size, ESP_LOG_WARN);
 
                 if (len > 0)
                 {
@@ -185,8 +183,6 @@ static void uart_record_data_task(void *arg)
         while (utl_cbf_bytes_available(uart_circ_buffers[uart_num]))
         {
             utl_cbf_get(uart_circ_buffers[uart_num], &uart_byte);
-
-            ESP_LOGI(TAG, "Byte: %04X", uart_byte);
 
             if (uart_byte == uart_terminator_char[uart_num])
             {

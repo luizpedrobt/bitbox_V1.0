@@ -90,12 +90,14 @@ def on_message(client, userdata, msg):
     else:
         return
 
-    line = f"[{host_ts}][{periph} {num}] [{ts_us}] {frame_str}"
-    print(line)
+    line_file = f"[{host_ts}][{periph} {num}] [{ts_us}] {frame_str}"
+    line_print = f"[{ts_us}] {frame_str}"
+
+    print(line_print)
 
     path = get_log_file(periph, num, userdata["log_dir"])
     with open(path, "a", encoding="utf-8") as f:
-        f.write(line + "\n")
+        f.write(line_file + "\n")
 
 
 def main():
